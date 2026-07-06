@@ -12,6 +12,7 @@ import Wishlist from './pages/Wishlist';
 import Vehicles from './pages/Vehicles';
 import Career from './pages/Career';
 import Notes from './pages/Notes';
+import Settings from './pages/Settings';
 
 const PAGES = {
   dashboard: Dashboard,
@@ -26,6 +27,7 @@ const PAGES = {
   vehicles: Vehicles,
   career: Career,
   notes: Notes,
+  settings: Settings,
 };
 
 export default function App() {

@@ -11,6 +11,7 @@ import {
   Car,
   TrendingUp,
   NotebookPen,
+  Settings,
 } from 'lucide-react';
 
 export const NAV_ITEMS = [
@@ -26,6 +27,7 @@ export const NAV_ITEMS = [
   { key: 'vehicles', label: 'Vehicles', icon: Car },
   { key: 'career', label: 'Career', icon: TrendingUp },
   { key: 'notes', label: 'Notes', icon: NotebookPen },
+  { key: 'settings', label: 'Settings', icon: Settings },
 ];
 
 export default function BottomNav({ active, onChange }) {
