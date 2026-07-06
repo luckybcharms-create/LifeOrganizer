@@ -187,6 +187,41 @@ export default function ImportantInfo() {
     setEditingDocId(null);
   }
 
+  function viewDocument(d) {
+    const win = window.open('', '_blank');
+    if (!win) {
+      window.alert('Please allow pop-ups for this site to view the document.');
+      return;
+    }
+    const isImage = d.mimeType?.startsWith('image/');
+    const isPdf = d.mimeType === 'application/pdf';
+    const safeName = d.name.replace(/</g, '&lt;');
+    let body;
+    if (isImage) {
+      body = `<img src="${d.dataUrl}" alt="${safeName}" style="max-width:100%;height:auto;display:block;margin:0 auto;" />`;
+    } else if (isPdf) {
+      body = `<embed src="${d.dataUrl}" type="application/pdf" style="width:100%;height:100vh;border:none;" />`;
+    } else {
+      body = `<div style="font-family:-apple-system,sans-serif;padding:32px;text-align:center;color:#333;">
+        <p>Preview isn't available for this file type.</p>
+        <a href="${d.dataUrl}" download="${d.fileName}">Download ${safeName}</a>
+      </div>`;
+    }
+    win.document.write(
+      `<!doctype html><html><head><title>${safeName}</title><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;background:#0d0f14;">${body}</body></html>`
+    );
+    win.document.close();
+  }
+
+  function downloadDocument(d) {
+    const a = document.createElement('a');
+    a.href = d.dataUrl;
+    a.download = d.fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
   const familyMembers = info.familyMembers || [];
   const passwords = info.passwords || [];
   const documents = info.documents || [];
@@ -309,14 +344,24 @@ export default function ImportantInfo() {
                     <div className="list-item-title">{d.name}</div>
                     <div className="list-item-sub">{formatFileSize(d.size)} · {formatDate(d.uploadedAt)}</div>
                     {d.notes && <div className="list-item-meta">{d.notes}</div>}
-                    <a
-                      className="link-row"
-                      href={d.dataUrl}
-                      download={d.fileName}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4 }}
-                    >
-                      <Download size={12} /> Download
-                    </a>
+                    <div style={{ display: 'flex', gap: 14, marginTop: 4 }}>
+                      <button
+                        type="button"
+                        className="link-row"
+                        style={{ background: 'none', border: 'none', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                        onClick={() => viewDocument(d)}
+                      >
+                        <Eye size={12} /> View
+                      </button>
+                      <button
+                        type="button"
+                        className="link-row"
+                        style={{ background: 'none', border: 'none', padding: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                        onClick={() => downloadDocument(d)}
+                      >
+                        <Download size={12} /> Download
+                      </button>
+                    </div>
                   </div>
                 </div>
               </SwipeableRow>

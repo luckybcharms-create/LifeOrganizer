@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Settings as SettingsIcon, Download, Upload, LogOut, Mail } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, LogOut, Mail, Sun, Moon } from 'lucide-react';
 import { KEYS } from '../utils/storageKeys';
 import { getAccount } from '../utils/auth';
 import PageHeader from '../components/PageHeader';
@@ -16,7 +16,7 @@ function buildExportPayload() {
 
 const TOGGLEABLE_ITEMS = NAV_ITEMS.filter((n) => !PINNED_KEYS.includes(n.key));
 
-export default function Settings({ onLock, visibility = {}, setVisibility }) {
+export default function Settings({ onLock, visibility = {}, setVisibility, theme = 'dark', setTheme }) {
   const fileInputRef = useRef(null);
   const [status, setStatus] = useState(null); // { type: 'success' | 'error', message }
   const account = getAccount();
@@ -94,6 +94,24 @@ export default function Settings({ onLock, visibility = {}, setVisibility }) {
           <button className="btn btn-block" onClick={onLock} style={{ marginTop: 12 }}>
             <LogOut size={16} /> Lock App
           </button>
+        </div>
+
+        <div className="section-title">Appearance</div>
+        <div className="card">
+          <div className="list-item" style={{ paddingTop: 0, paddingBottom: 0, borderBottom: 'none' }}>
+            <div className="list-item-main" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {theme === 'light' ? <Sun size={18} color="var(--text-dim)" /> : <Moon size={18} color="var(--text-dim)" />}
+              <div className="list-item-title">Light Mode</div>
+            </div>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={theme === 'light'}
+                onChange={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              />
+              <span className="switch-track" />
+            </label>
+          </div>
         </div>
 
         <div className="section-title">Manage Sections</div>

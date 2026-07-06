@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import BottomNav from './components/BottomNav';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -34,10 +34,19 @@ const PAGES = {
   settings: Settings,
 };
 
+const THEME_COLORS = { dark: '#0d0f14', light: '#f4f5f7' };
+
 export default function App() {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(SESSION_KEY) === '1');
   const [tab, setTab] = useState('dashboard');
   const [visibility, setVisibility] = useLocalStorage(KEYS.sectionVisibility, {});
+  const [theme, setTheme] = useLocalStorage(KEYS.theme, 'dark');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', THEME_COLORS[theme] || THEME_COLORS.dark);
+  }, [theme]);
 
   if (!unlocked) {
     return <Login onSuccess={() => setUnlocked(true)} />;
@@ -57,6 +66,8 @@ export default function App() {
         onLock={handleLock}
         visibility={visibility}
         setVisibility={setVisibility}
+        theme={theme}
+        setTheme={setTheme}
       />
       <BottomNav active={tab} onChange={setTab} visibility={visibility} />
     </div>

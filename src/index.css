@@ -24,6 +24,9 @@
   --amber-dim: #3a2e14;
   --blue: #5aa9ff;
 
+  --bg-translucent: rgba(13, 15, 20, 0.85);
+  --bg-elevated-translucent: rgba(22, 25, 34, 0.92);
+
   --radius: 14px;
   --radius-sm: 10px;
   --nav-height: 64px;
@@ -31,6 +34,36 @@
   --safe-top: env(safe-area-inset-top, 0px);
 
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f4f5f7;
+  --bg-elevated: #ffffff;
+  --bg-card: #ffffff;
+  --bg-input: #f0f1f4;
+  --border: #dde1e7;
+  --border-soft: #e8eaee;
+
+  --text: #14161a;
+  --text-dim: #5b6270;
+  --text-faint: #8b93a1;
+
+  --accent: #4f6bff;
+  --accent-dim: #e4e9ff;
+  --accent-text: #14162b;
+
+  --green: #1f9d63;
+  --green-dim: #e3f6ec;
+  --red: #dc3a3f;
+  --red-dim: #fbe4e4;
+  --amber: #b9790a;
+  --amber-dim: #fbf0dc;
+  --blue: #2563eb;
+
+  --bg-translucent: rgba(244, 245, 247, 0.85);
+  --bg-elevated-translucent: rgba(255, 255, 255, 0.92);
 }
 
 * {
@@ -81,7 +114,7 @@ h1, h2, h3, p {
   top: 0;
   z-index: 10;
   padding: calc(var(--safe-top) + 16px) 20px 14px;
-  background: linear-gradient(180deg, var(--bg) 60%, rgba(13,15,20,0.85));
+  background: linear-gradient(180deg, var(--bg) 60%, var(--bg-translucent));
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
@@ -118,7 +151,7 @@ h1, h2, h3, p {
   scrollbar-width: none;
   gap: 2px;
   padding: 6px 6px calc(6px + var(--safe-bottom));
-  background: rgba(22, 25, 34, 0.92);
+  background: var(--bg-elevated-translucent);
   backdrop-filter: blur(16px);
   border-top: 1px solid var(--border-soft);
 }
