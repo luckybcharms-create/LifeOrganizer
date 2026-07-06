@@ -1,0 +1,17 @@
+export const KEYS = {
+  fitness: 'lo_fitness_workouts',
+  finance: 'lo_finance_transactions',
+  bills: 'lo_bills',
+  subscriptions: 'lo_subscriptions',
+  importantInfo: 'lo_important_info',
+  goals: 'lo_goals',
+  habits: 'lo_habits',
+  habitLog: 'lo_habit_log',
+  wishlist: 'lo_wishlist',
+  vehicles: 'lo_vehicles',
+  vehicleServices: 'lo_vehicle_services',
+  careerSales: 'lo_career_sales',
+  careerTraining: 'lo_career_training',
+  careerGoals: 'lo_career_goals',
+  notes: 'lo_notes',
+};
