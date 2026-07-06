@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { HeartPulse, Trash2, Plus, Eye, EyeOff, Copy, Pencil } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Shield, HeartPulse, Lock, FileText, Download, Trash2, Plus, Eye, EyeOff, Copy, Pencil } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
+import { todayISO, formatDate } from '../utils/date';
 import PageHeader from '../components/PageHeader';
 import Sheet from '../components/Sheet';
 import EmptyState from '../components/EmptyState';
@@ -11,20 +12,34 @@ import SwipeableRow from '../components/SwipeableRow';
 const defaultInfo = {
   familyMembers: [],
   passwords: [],
+  documents: [],
 };
 
 const emptyMember = { name: '', relationship: '', bloodType: '', allergies: '', medicalNotes: '' };
 const emptyPassword = { name: '', username: '', password: '', notes: '' };
+const emptyDocForm = { name: '', notes: '' };
 const BLOOD_TYPES = ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'];
+const MAX_DOCUMENT_SIZE = 2 * 1024 * 1024; // 2 MB — localStorage quota is limited and shared
+
+function formatFileSize(bytes) {
+  if (!bytes) return '0 KB';
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(0)} KB`;
+  return `${(kb / 1024).toFixed(1)} MB`;
+}
 
 export default function ImportantInfo() {
   const [info, setInfo] = useLocalStorage(KEYS.importantInfo, defaultInfo);
-  const [modal, setModal] = useState(null); // 'member' | 'password' | null
+  const [modal, setModal] = useState(null); // 'member' | 'password' | 'document' | null
   const [memberForm, setMemberForm] = useState(emptyMember);
   const [editingMemberId, setEditingMemberId] = useState(null);
   const [passwordForm, setPasswordForm] = useState(emptyPassword);
   const [editingPasswordId, setEditingPasswordId] = useState(null);
   const [revealed, setRevealed] = useState({});
+  const [docForm, setDocForm] = useState(emptyDocForm);
+  const [editingDocId, setEditingDocId] = useState(null);
+  const [pendingFile, setPendingFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   function openAddMember() {
     setMemberForm(emptyMember);
@@ -102,12 +117,83 @@ export default function ImportantInfo() {
     }
   }
 
+  function openAddDocument() {
+    fileInputRef.current?.click();
+  }
+
+  function handleFileSelect(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.size > MAX_DOCUMENT_SIZE) {
+      window.alert(
+        `"${file.name}" is ${formatFileSize(file.size)} — that's over the 2 MB limit for locally stored documents. Try a smaller file or a compressed scan.`
+      );
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPendingFile({ dataUrl: reader.result, mimeType: file.type, size: file.size, fileName: file.name });
+      setDocForm({ name: file.name, notes: '' });
+      setEditingDocId(null);
+      setModal('document');
+    };
+    reader.onerror = () => window.alert('Could not read that file.');
+    reader.readAsDataURL(file);
+  }
+
+  function openEditDocument(d) {
+    setDocForm({ name: d.name, notes: d.notes || '' });
+    setEditingDocId(d.id);
+    setPendingFile(null);
+    setModal('document');
+  }
+
+  function saveDocument(e) {
+    e.preventDefault();
+    if (!docForm.name.trim()) return;
+    const documents = info.documents || [];
+    if (editingDocId) {
+      setInfo({
+        ...info,
+        documents: documents.map((d) => (d.id === editingDocId ? { ...d, name: docForm.name, notes: docForm.notes } : d)),
+      });
+    } else {
+      if (!pendingFile) return;
+      const doc = {
+        id: makeId(),
+        name: docForm.name,
+        notes: docForm.notes,
+        fileName: pendingFile.fileName,
+        mimeType: pendingFile.mimeType,
+        size: pendingFile.size,
+        dataUrl: pendingFile.dataUrl,
+        uploadedAt: todayISO(),
+      };
+      setInfo({ ...info, documents: [doc, ...documents] });
+    }
+    closeDocumentModal();
+  }
+
+  function removeDocument(id) {
+    setInfo({ ...info, documents: (info.documents || []).filter((d) => d.id !== id) });
+    closeDocumentModal();
+  }
+
+  function closeDocumentModal() {
+    setModal(null);
+    setPendingFile(null);
+    setDocForm(emptyDocForm);
+    setEditingDocId(null);
+  }
+
   const familyMembers = info.familyMembers || [];
   const passwords = info.passwords || [];
+  const documents = info.documents || [];
 
   return (
     <>
-      <PageHeader icon={HeartPulse} title="Important Info" />
+      <PageHeader icon={Shield} title="Important Info" />
       <main className="app-main">
         <div className="flex-between">
           <div className="section-title mt-0">Family Health Info</div>
@@ -154,7 +240,7 @@ export default function ImportantInfo() {
           Stored locally on this device only, in plain text — don't rely on this if others can access your browser.
         </p>
         {passwords.length === 0 && (
-          <EmptyState icon={HeartPulse} message="No passwords saved yet." />
+          <EmptyState icon={Lock} message="No passwords saved yet." />
         )}
         {passwords.length > 0 && (
           <div className="card">
@@ -182,6 +268,55 @@ export default function ImportantInfo() {
                       </button>
                     </div>
                     {p.notes && <div className="list-item-meta">{p.notes}</div>}
+                  </div>
+                </div>
+              </SwipeableRow>
+            ))}
+          </div>
+        )}
+
+        <div className="flex-between">
+          <div className="section-title mt-0">Documents</div>
+          <button className="btn-icon" onClick={openAddDocument} aria-label="Add document">
+            <Plus size={18} />
+          </button>
+        </div>
+        <p className="muted" style={{ marginBottom: 10 }}>
+          Stored locally on this device. Keep files under 2 MB — browser storage is limited.
+        </p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,.pdf,.doc,.docx,.txt"
+          onChange={handleFileSelect}
+          style={{ display: 'none' }}
+        />
+        {documents.length === 0 && (
+          <EmptyState icon={FileText} message="No documents uploaded yet." />
+        )}
+        {documents.length > 0 && (
+          <div className="card">
+            {documents.map((d) => (
+              <SwipeableRow
+                key={d.id}
+                actions={[
+                  { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEditDocument(d) },
+                  { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => removeDocument(d.id) },
+                ]}
+              >
+                <div className="list-item">
+                  <div className="list-item-main">
+                    <div className="list-item-title">{d.name}</div>
+                    <div className="list-item-sub">{formatFileSize(d.size)} · {formatDate(d.uploadedAt)}</div>
+                    {d.notes && <div className="list-item-meta">{d.notes}</div>}
+                    <a
+                      className="link-row"
+                      href={d.dataUrl}
+                      download={d.fileName}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4 }}
+                    >
+                      <Download size={12} /> Download
+                    </a>
                   </div>
                 </div>
               </SwipeableRow>
@@ -296,6 +431,41 @@ export default function ImportantInfo() {
             {editingPasswordId && (
               <button type="button" className="btn-danger-text" style={{ alignSelf: 'center' }} onClick={() => removePassword(editingPasswordId)}>
                 Delete Password
+              </button>
+            )}
+          </form>
+        </Sheet>
+      )}
+
+      {modal === 'document' && (
+        <Sheet title={editingDocId ? 'Edit Document' : 'Save Document'} onClose={closeDocumentModal}>
+          <form className="form" onSubmit={saveDocument}>
+            {pendingFile && (
+              <p className="muted">{pendingFile.fileName} · {formatFileSize(pendingFile.size)}</p>
+            )}
+            <div className="field">
+              <label>Name</label>
+              <input
+                type="text"
+                value={docForm.name}
+                onChange={(e) => setDocForm({ ...docForm, name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="field">
+              <label>Notes</label>
+              <textarea
+                placeholder="Optional"
+                value={docForm.notes}
+                onChange={(e) => setDocForm({ ...docForm, notes: e.target.value })}
+              />
+            </div>
+            <button type="submit" className="btn btn-primary btn-block">
+              {editingDocId ? 'Save Changes' : 'Save Document'}
+            </button>
+            {editingDocId && (
+              <button type="button" className="btn-danger-text" style={{ alignSelf: 'center' }} onClick={() => removeDocument(editingDocId)}>
+                Delete Document
               </button>
             )}
           </form>

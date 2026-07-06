@@ -10,12 +10,16 @@ import Fab from '../components/Fab';
 import EmptyState from '../components/EmptyState';
 import SwipeableRow from '../components/SwipeableRow';
 
-function last7Days() {
+// Sunday-to-Saturday of the current week (not a rolling 7-day window).
+function currentWeekDays() {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
   const days = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - i);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
     days.push(d.toISOString().slice(0, 10));
   }
   return days;
@@ -44,9 +48,17 @@ export default function Habits() {
   const [name, setName] = useState('');
   const [editingId, setEditingId] = useState(null);
 
-  const days = useMemo(() => last7Days(), []);
+  const days = useMemo(() => currentWeekDays(), []);
   const today = todayISO();
   const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+  const sortedHabits = useMemo(() => {
+    return [...habits].sort((a, b) => {
+      const aDone = (log[a.id] || []).includes(today) ? 1 : 0;
+      const bDone = (log[b.id] || []).includes(today) ? 1 : 0;
+      return aDone - bDone;
+    });
+  }, [habits, log, today]);
 
   function submit(e) {
     e.preventDefault();
@@ -94,7 +106,7 @@ export default function Habits() {
           <EmptyState icon={CheckSquare} message="No habits yet. Tap + to start tracking one." />
         )}
 
-        {habits.map((h) => {
+        {sortedHabits.map((h) => {
           const dates = log[h.id] || [];
           const streak = calcStreak(dates);
           const doneToday = dates.includes(today);
@@ -126,7 +138,7 @@ export default function Habits() {
                 <div className="habit-grid">
                   {days.map((d, i) => (
                     <div key={d} className={`habit-day ${dates.includes(d) ? 'done' : ''}`}>
-                      {dayLabels[new Date(d + 'T00:00:00').getDay()]}
+                      {dayLabels[i]}
                     </div>
                   ))}
                 </div>
