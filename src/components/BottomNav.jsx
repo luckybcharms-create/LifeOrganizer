@@ -30,10 +30,18 @@ export const NAV_ITEMS = [
   { key: 'settings', label: 'Settings', icon: Settings },
 ];
 
-export default function BottomNav({ active, onChange }) {
+// Always reachable, regardless of section visibility settings.
+export const PINNED_KEYS = ['dashboard', 'settings'];
+
+export function visibleNavItems(visibility = {}) {
+  return NAV_ITEMS.filter(({ key }) => PINNED_KEYS.includes(key) || visibility[key] !== false);
+}
+
+export default function BottomNav({ active, onChange, visibility }) {
+  const items = visibleNavItems(visibility);
   return (
     <nav className="bottom-nav">
-      {NAV_ITEMS.map(({ key, label, icon: Icon }) => (
+      {items.map(({ key, label, icon: Icon }) => (
         <button
           key={key}
           className={`nav-item ${active === key ? 'active' : ''}`}

@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react';
-import { Settings as SettingsIcon, Download, Upload } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, LogOut, Mail } from 'lucide-react';
 import { KEYS } from '../utils/storageKeys';
+import { getAccount } from '../utils/auth';
 import PageHeader from '../components/PageHeader';
+import { NAV_ITEMS, PINNED_KEYS } from '../components/BottomNav';
 
 function buildExportPayload() {
   const data = {};
@@ -12,9 +14,17 @@ function buildExportPayload() {
   return { app: 'life-organizer', exportedAt: new Date().toISOString(), data };
 }
 
-export default function Settings() {
+const TOGGLEABLE_ITEMS = NAV_ITEMS.filter((n) => !PINNED_KEYS.includes(n.key));
+
+export default function Settings({ onLock, visibility = {}, setVisibility }) {
   const fileInputRef = useRef(null);
   const [status, setStatus] = useState(null); // { type: 'success' | 'error', message }
+  const account = getAccount();
+
+  function toggleSection(key) {
+    const isVisible = visibility[key] !== false;
+    setVisibility({ ...visibility, [key]: !isVisible });
+  }
 
   function handleExport() {
     const payload = buildExportPayload();
@@ -71,6 +81,44 @@ export default function Settings() {
     <>
       <PageHeader icon={SettingsIcon} title="Settings" />
       <main className="app-main">
+        <div className="section-title mt-0">Account</div>
+        <div className="card">
+          <div className="list-item" style={{ paddingTop: 0 }}>
+            <div className="list-item-main">
+              <div className="list-item-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Mail size={14} /> {account?.email || 'Unknown'}
+              </div>
+              <div className="list-item-sub">Signed in on this device</div>
+            </div>
+          </div>
+          <button className="btn btn-block" onClick={onLock} style={{ marginTop: 12 }}>
+            <LogOut size={16} /> Lock App
+          </button>
+        </div>
+
+        <div className="section-title">Manage Sections</div>
+        <div className="card">
+          <p className="muted" style={{ marginBottom: 8 }}>
+            Hide sections you don't use. Your data is kept — hidden sections can be turned back on
+            anytime and nothing is deleted.
+          </p>
+          {TOGGLEABLE_ITEMS.map(({ key, label, icon: Icon }) => {
+            const isOn = visibility[key] !== false;
+            return (
+              <div className="list-item" key={key}>
+                <div className="list-item-main" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Icon size={18} color="var(--text-dim)" />
+                  <div className="list-item-title">{label}</div>
+                </div>
+                <label className="switch">
+                  <input type="checkbox" checked={isOn} onChange={() => toggleSection(key)} />
+                  <span className="switch-track" />
+                </label>
+              </div>
+            );
+          })}
+        </div>
+
         <div className="section-title">Backup &amp; Restore</div>
         <div className="card">
           <p className="muted" style={{ marginBottom: 16 }}>

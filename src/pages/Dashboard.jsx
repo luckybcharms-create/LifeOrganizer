@@ -5,7 +5,8 @@ import { KEYS } from '../utils/storageKeys';
 import { todayISO, daysUntil, currency } from '../utils/date';
 import PageHeader from '../components/PageHeader';
 import StatTile from '../components/StatTile';
-import { NAV_ITEMS } from '../components/BottomNav';
+import EmptyState from '../components/EmptyState';
+import { visibleNavItems } from '../components/BottomNav';
 
 function greeting() {
   const h = new Date().getHours();
@@ -14,7 +15,8 @@ function greeting() {
   return 'Good evening';
 }
 
-export default function Dashboard({ onNavigate }) {
+export default function Dashboard({ onNavigate, visibility = {} }) {
+  const isVisible = (key) => visibility[key] !== false;
   const [transactions] = useLocalStorage(KEYS.finance, []);
   const [bills] = useLocalStorage(KEYS.bills, []);
   const [subs] = useLocalStorage(KEYS.subscriptions, []);
@@ -67,29 +69,47 @@ export default function Dashboard({ onNavigate }) {
       <PageHeader icon={LayoutGrid} title={greeting()} />
       <main className="app-main">
         <div className="stat-row">
-          <StatTile label="Balance" value={currency(balance)} tone={balance >= 0 ? 'positive' : 'negative'} />
-          <StatTile label="Overdue Bills" value={overdueBills} tone={overdueBills ? 'negative' : ''} />
-          <StatTile label="Subs / Month" value={currency(subsMonthly)} />
-          <StatTile label="Active Goals" value={activeGoals} />
-          <StatTile label="Habits Today" value={`${habitsDoneToday}/${habits.length}`} tone={habits.length && habitsDoneToday === habits.length ? 'positive' : ''} />
-          <StatTile label="Workouts (7d)" value={workoutsThisWeek} />
-          <StatTile label="Wishlist Total" value={currency(wishlistTotal)} />
+          {isVisible('finance') && (
+            <StatTile label="Balance" value={currency(balance)} tone={balance >= 0 ? 'positive' : 'negative'} />
+          )}
+          {isVisible('bills') && (
+            <StatTile label="Overdue Bills" value={overdueBills} tone={overdueBills ? 'negative' : ''} />
+          )}
+          {isVisible('subscriptions') && (
+            <StatTile label="Subs / Month" value={currency(subsMonthly)} />
+          )}
+          {isVisible('goals') && (
+            <StatTile label="Active Goals" value={activeGoals} />
+          )}
+          {isVisible('habits') && (
+            <StatTile label="Habits Today" value={`${habitsDoneToday}/${habits.length}`} tone={habits.length && habitsDoneToday === habits.length ? 'positive' : ''} />
+          )}
+          {isVisible('fitness') && (
+            <StatTile label="Workouts (7d)" value={workoutsThisWeek} />
+          )}
+          {isVisible('wishlist') && (
+            <StatTile label="Wishlist Total" value={currency(wishlistTotal)} />
+          )}
         </div>
 
         <div className="section-title">Jump To</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-          {NAV_ITEMS.filter((n) => n.key !== 'dashboard').map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              className="card"
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, border: '1px solid var(--border-soft)', background: 'var(--bg-card)', cursor: 'pointer' }}
-              onClick={() => onNavigate(key)}
-            >
-              <Icon size={22} color="var(--accent)" />
-              <span style={{ fontSize: 12.5, fontWeight: 600 }}>{label}</span>
-            </button>
-          ))}
-        </div>
+        {visibleNavItems(visibility).filter((n) => n.key !== 'dashboard').length === 0 ? (
+          <EmptyState message="All sections are hidden. Enable some in Settings." />
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            {visibleNavItems(visibility).filter((n) => n.key !== 'dashboard').map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                className="card"
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, border: '1px solid var(--border-soft)', background: 'var(--bg-card)', cursor: 'pointer' }}
+                onClick={() => onNavigate(key)}
+              >
+                <Icon size={22} color="var(--accent)" />
+                <span style={{ fontSize: 12.5, fontWeight: 600 }}>{label}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </main>
     </>
   );

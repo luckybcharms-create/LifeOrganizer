@@ -15,4 +15,5 @@ export const KEYS = {
   careerTraining: 'lo_career_training',
   careerGoals: 'lo_career_goals',
   notes: 'lo_notes',
+  sectionVisibility: 'lo_section_visibility',
 };
