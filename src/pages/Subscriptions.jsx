@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Repeat, Trash2 } from 'lucide-react';
+import { Repeat, Trash2, Pencil } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
@@ -16,6 +16,7 @@ export default function Subscriptions() {
   const [subs, setSubs] = useLocalStorage(KEYS.subscriptions, []);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
 
   const totals = useMemo(() => {
     let monthly = 0;
@@ -34,13 +35,32 @@ export default function Subscriptions() {
   function submit(e) {
     e.preventDefault();
     if (!form.name.trim() || !form.cost) return;
-    setSubs([{ id: makeId(), ...form }, ...subs]);
+    if (editingId) {
+      setSubs(subs.map((s) => (s.id === editingId ? { id: editingId, ...form } : s)));
+    } else {
+      setSubs([{ id: makeId(), ...form }, ...subs]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
 
   function remove(id) {
     setSubs(subs.filter((s) => s.id !== id));
+    setShowForm(false);
+    setEditingId(null);
+  }
+
+  function openAdd() {
+    setForm(emptyForm);
+    setEditingId(null);
+    setShowForm(true);
+  }
+
+  function openEdit(s) {
+    setForm(s);
+    setEditingId(s.id);
+    setShowForm(true);
   }
 
   return (
@@ -75,9 +95,14 @@ export default function Subscriptions() {
                   </div>
                   <div className="list-item-side">
                     <span className="amount">{currency(s.cost)}</span>
-                    <button className="btn-danger-text" onClick={() => remove(s.id)} aria-label="Delete">
-                      <Trash2 size={16} />
-                    </button>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEdit(s)} aria-label="Edit">
+                        <Pencil size={15} />
+                      </button>
+                      <button className="btn-danger-text" onClick={() => remove(s.id)} aria-label="Delete">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -86,10 +111,10 @@ export default function Subscriptions() {
         )}
       </main>
 
-      <Fab onClick={() => setShowForm(true)} label="Add subscription" />
+      <Fab onClick={openAdd} label="Add subscription" />
 
       {showForm && (
-        <Sheet title="Add Subscription" onClose={() => setShowForm(false)}>
+        <Sheet title={editingId ? 'Edit Subscription' : 'Add Subscription'} onClose={() => setShowForm(false)}>
           <form className="form" onSubmit={submit}>
             <div className="field">
               <label>Name</label>
@@ -139,7 +164,7 @@ export default function Subscriptions() {
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
               />
             </div>
-            <button type="submit" className="btn btn-primary btn-block">Save Subscription</button>
+            <button type="submit" className="btn btn-primary btn-block">{editingId ? 'Save Changes' : 'Save Subscription'}</button>
           </form>
         </Sheet>
       )}

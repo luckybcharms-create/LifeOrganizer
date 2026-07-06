@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Dumbbell, Trash2 } from 'lucide-react';
+import { Dumbbell, Trash2, Pencil } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
@@ -16,6 +16,7 @@ export default function Fitness() {
   const [workouts, setWorkouts] = useLocalStorage(KEYS.fitness, []);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
 
   const grouped = useMemo(() => {
     const byDate = {};
@@ -38,13 +39,32 @@ export default function Fitness() {
   function submit(e) {
     e.preventDefault();
     if (!form.exercise.trim()) return;
-    setWorkouts([{ id: makeId(), ...form }, ...workouts]);
+    if (editingId) {
+      setWorkouts(workouts.map((w) => (w.id === editingId ? { id: editingId, ...form } : w)));
+    } else {
+      setWorkouts([{ id: makeId(), ...form }, ...workouts]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
 
   function remove(id) {
     setWorkouts(workouts.filter((w) => w.id !== id));
+    setShowForm(false);
+    setEditingId(null);
+  }
+
+  function openAdd() {
+    setForm(emptyForm);
+    setEditingId(null);
+    setShowForm(true);
+  }
+
+  function openEdit(w) {
+    setForm(w);
+    setEditingId(w.id);
+    setShowForm(true);
   }
 
   return (
@@ -73,19 +93,24 @@ export default function Fitness() {
                   </div>
                   {w.notes && <div className="list-item-meta">{w.notes}</div>}
                 </div>
-                <button className="btn-danger-text" onClick={() => remove(w.id)} aria-label="Delete">
-                  <Trash2 size={16} />
-                </button>
+                <div className="list-item-side" style={{ flexDirection: 'row' }}>
+                  <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEdit(w)} aria-label="Edit">
+                    <Pencil size={15} />
+                  </button>
+                  <button className="btn-danger-text" onClick={() => remove(w.id)} aria-label="Delete">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         ))}
       </main>
 
-      <Fab onClick={() => setShowForm(true)} label="Log workout" />
+      <Fab onClick={openAdd} label="Log workout" />
 
       {showForm && (
-        <Sheet title="Log Workout" onClose={() => setShowForm(false)}>
+        <Sheet title={editingId ? 'Edit Workout' : 'Log Workout'} onClose={() => setShowForm(false)}>
           <form className="form" onSubmit={submit}>
             <div className="field">
               <label>Date</label>
@@ -136,7 +161,7 @@ export default function Fitness() {
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
               />
             </div>
-            <button type="submit" className="btn btn-primary btn-block">Save Workout</button>
+            <button type="submit" className="btn btn-primary btn-block">{editingId ? 'Save Changes' : 'Save Workout'}</button>
           </form>
         </Sheet>
       )}

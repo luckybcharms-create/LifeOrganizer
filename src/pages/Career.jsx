@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { TrendingUp, Trash2 } from 'lucide-react';
+import { TrendingUp, Trash2, Pencil } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
@@ -23,6 +23,7 @@ export default function Career() {
   const [saleForm, setSaleForm] = useState(emptySale);
   const [trainingForm, setTrainingForm] = useState(emptyTraining);
   const [goalForm, setGoalForm] = useState(emptyGoal);
+  const [editingId, setEditingId] = useState(null);
 
   const salesSorted = useMemo(() => [...sales].sort((a, b) => (a.date < b.date ? 1 : -1)), [sales]);
   const trainingSorted = useMemo(() => [...training].sort((a, b) => (a.date < b.date ? 1 : -1)), [training]);
@@ -39,27 +40,68 @@ export default function Career() {
     return { totalSales, totalCommission, monthSales };
   }, [sales]);
 
-  function addSale(e) {
+  function openAdd() {
+    setSaleForm(emptySale);
+    setTrainingForm(emptyTraining);
+    setGoalForm(emptyGoal);
+    setEditingId(null);
+    setShowForm(true);
+  }
+
+  function openEditSale(s) {
+    setSaleForm(s);
+    setEditingId(s.id);
+    setShowForm(true);
+  }
+
+  function openEditTraining(t) {
+    setTrainingForm(t);
+    setEditingId(t.id);
+    setShowForm(true);
+  }
+
+  function openEditGoal(g) {
+    setGoalForm(g);
+    setEditingId(g.id);
+    setShowForm(true);
+  }
+
+  function saveSale(e) {
     e.preventDefault();
     if (!saleForm.amount) return;
-    setSales([{ id: makeId(), ...saleForm }, ...sales]);
+    if (editingId) {
+      setSales(sales.map((s) => (s.id === editingId ? { id: editingId, ...saleForm } : s)));
+    } else {
+      setSales([{ id: makeId(), ...saleForm }, ...sales]);
+    }
     setSaleForm(emptySale);
+    setEditingId(null);
     setShowForm(false);
   }
 
-  function addTraining(e) {
+  function saveTraining(e) {
     e.preventDefault();
     if (!trainingForm.title.trim()) return;
-    setTraining([{ id: makeId(), ...trainingForm }, ...training]);
+    if (editingId) {
+      setTraining(training.map((t) => (t.id === editingId ? { id: editingId, ...trainingForm } : t)));
+    } else {
+      setTraining([{ id: makeId(), ...trainingForm }, ...training]);
+    }
     setTrainingForm(emptyTraining);
+    setEditingId(null);
     setShowForm(false);
   }
 
-  function addGoal(e) {
+  function saveGoal(e) {
     e.preventDefault();
     if (!goalForm.title.trim()) return;
-    setGoals([{ id: makeId(), ...goalForm }, ...goals]);
+    if (editingId) {
+      setGoals(goals.map((g) => (g.id === editingId ? { ...g, ...goalForm } : g)));
+    } else {
+      setGoals([{ id: makeId(), ...goalForm }, ...goals]);
+    }
     setGoalForm(emptyGoal);
+    setEditingId(null);
     setShowForm(false);
   }
 
@@ -98,9 +140,14 @@ export default function Career() {
                     <div className="list-item-side">
                       <span className="amount income">{currency(s.amount)}</span>
                       {s.commission && <span className="muted">Comm: {currency(s.commission)}</span>}
-                      <button className="btn-danger-text" onClick={() => setSales(sales.filter((x) => x.id !== s.id))}>
-                        <Trash2 size={16} />
-                      </button>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEditSale(s)} aria-label="Edit">
+                          <Pencil size={15} />
+                        </button>
+                        <button className="btn-danger-text" onClick={() => setSales(sales.filter((x) => x.id !== s.id))}>
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -123,9 +170,14 @@ export default function Career() {
                       <div className="list-item-sub">{formatDate(t.date)}</div>
                       {t.notes && <div className="list-item-meta">{t.notes}</div>}
                     </div>
-                    <button className="btn-danger-text" onClick={() => setTraining(training.filter((x) => x.id !== t.id))}>
-                      <Trash2 size={16} />
-                    </button>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEditTraining(t)} aria-label="Edit">
+                        <Pencil size={15} />
+                      </button>
+                      <button className="btn-danger-text" onClick={() => setTraining(training.filter((x) => x.id !== t.id))}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -155,9 +207,14 @@ export default function Career() {
                         {g.notes && <div className="list-item-meta">{g.notes}</div>}
                       </div>
                     </label>
-                    <button className="btn-danger-text" onClick={() => setGoals(goals.filter((x) => x.id !== g.id))}>
-                      <Trash2 size={16} />
-                    </button>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEditGoal(g)} aria-label="Edit">
+                        <Pencil size={15} />
+                      </button>
+                      <button className="btn-danger-text" onClick={() => setGoals(goals.filter((x) => x.id !== g.id))}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -166,11 +223,11 @@ export default function Career() {
         )}
       </main>
 
-      <Fab onClick={() => setShowForm(true)} label="Add entry" />
+      <Fab onClick={openAdd} label="Add entry" />
 
       {showForm && tab === 'sales' && (
-        <Sheet title="Log Sale" onClose={() => setShowForm(false)}>
-          <form className="form" onSubmit={addSale}>
+        <Sheet title={editingId ? 'Edit Sale' : 'Log Sale'} onClose={() => setShowForm(false)}>
+          <form className="form" onSubmit={saveSale}>
             <div className="field">
               <label>Date</label>
               <input type="date" value={saleForm.date} onChange={(e) => setSaleForm({ ...saleForm, date: e.target.value })} required />
@@ -189,14 +246,14 @@ export default function Career() {
               <label>Notes</label>
               <textarea value={saleForm.notes} onChange={(e) => setSaleForm({ ...saleForm, notes: e.target.value })} />
             </div>
-            <button type="submit" className="btn btn-primary btn-block">Save Sale</button>
+            <button type="submit" className="btn btn-primary btn-block">{editingId ? 'Save Changes' : 'Save Sale'}</button>
           </form>
         </Sheet>
       )}
 
       {showForm && tab === 'training' && (
-        <Sheet title="Log Training Note" onClose={() => setShowForm(false)}>
-          <form className="form" onSubmit={addTraining}>
+        <Sheet title={editingId ? 'Edit Training Note' : 'Log Training Note'} onClose={() => setShowForm(false)}>
+          <form className="form" onSubmit={saveTraining}>
             <div className="field">
               <label>Title</label>
               <input type="text" value={trainingForm.title} onChange={(e) => setTrainingForm({ ...trainingForm, title: e.target.value })} required />
@@ -209,14 +266,14 @@ export default function Career() {
               <label>Notes</label>
               <textarea value={trainingForm.notes} onChange={(e) => setTrainingForm({ ...trainingForm, notes: e.target.value })} />
             </div>
-            <button type="submit" className="btn btn-primary btn-block">Save Note</button>
+            <button type="submit" className="btn btn-primary btn-block">{editingId ? 'Save Changes' : 'Save Note'}</button>
           </form>
         </Sheet>
       )}
 
       {showForm && tab === 'goals' && (
-        <Sheet title="Add Performance Goal" onClose={() => setShowForm(false)}>
-          <form className="form" onSubmit={addGoal}>
+        <Sheet title={editingId ? 'Edit Performance Goal' : 'Add Performance Goal'} onClose={() => setShowForm(false)}>
+          <form className="form" onSubmit={saveGoal}>
             <div className="field">
               <label>Goal</label>
               <input type="text" value={goalForm.title} onChange={(e) => setGoalForm({ ...goalForm, title: e.target.value })} required />
@@ -229,7 +286,7 @@ export default function Career() {
               <label>Notes</label>
               <textarea value={goalForm.notes} onChange={(e) => setGoalForm({ ...goalForm, notes: e.target.value })} />
             </div>
-            <button type="submit" className="btn btn-primary btn-block">Save Goal</button>
+            <button type="submit" className="btn btn-primary btn-block">{editingId ? 'Save Changes' : 'Save Goal'}</button>
           </form>
         </Sheet>
       )}

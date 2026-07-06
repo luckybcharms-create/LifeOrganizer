@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ShoppingBag, Trash2, ExternalLink } from 'lucide-react';
+import { ShoppingBag, Trash2, ExternalLink, Pencil } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
@@ -18,6 +18,7 @@ export default function Wishlist() {
   const [items, setItems] = useLocalStorage(KEYS.wishlist, []);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
 
   const sorted = useMemo(
     () => [...items].sort((a, b) => priorityRank[a.priority] - priorityRank[b.priority]),
@@ -29,13 +30,32 @@ export default function Wishlist() {
   function submit(e) {
     e.preventDefault();
     if (!form.name.trim()) return;
-    setItems([{ id: makeId(), ...form }, ...items]);
+    if (editingId) {
+      setItems(items.map((i) => (i.id === editingId ? { id: editingId, ...form } : i)));
+    } else {
+      setItems([{ id: makeId(), ...form }, ...items]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
 
   function remove(id) {
     setItems(items.filter((i) => i.id !== id));
+    setShowForm(false);
+    setEditingId(null);
+  }
+
+  function openAdd() {
+    setForm(emptyForm);
+    setEditingId(null);
+    setShowForm(true);
+  }
+
+  function openEdit(i) {
+    setForm(i);
+    setEditingId(i.id);
+    setShowForm(true);
   }
 
   return (
@@ -68,9 +88,14 @@ export default function Wishlist() {
                 </div>
                 <div className="list-item-side">
                   <span className="amount">{currency(i.price)}</span>
-                  <button className="btn-danger-text" onClick={() => remove(i.id)} aria-label="Delete">
-                    <Trash2 size={16} />
-                  </button>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEdit(i)} aria-label="Edit">
+                      <Pencil size={15} />
+                    </button>
+                    <button className="btn-danger-text" onClick={() => remove(i.id)} aria-label="Delete">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -78,10 +103,10 @@ export default function Wishlist() {
         )}
       </main>
 
-      <Fab onClick={() => setShowForm(true)} label="Add item" />
+      <Fab onClick={openAdd} label="Add item" />
 
       {showForm && (
-        <Sheet title="Add Wishlist Item" onClose={() => setShowForm(false)}>
+        <Sheet title={editingId ? 'Edit Wishlist Item' : 'Add Wishlist Item'} onClose={() => setShowForm(false)}>
           <form className="form" onSubmit={submit}>
             <div className="field">
               <label>Item Name</label>
@@ -130,7 +155,7 @@ export default function Wishlist() {
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
               />
             </div>
-            <button type="submit" className="btn btn-primary btn-block">Save Item</button>
+            <button type="submit" className="btn btn-primary btn-block">{editingId ? 'Save Changes' : 'Save Item'}</button>
           </form>
         </Sheet>
       )}

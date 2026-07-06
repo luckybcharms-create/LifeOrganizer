@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Car, Trash2, Plus } from 'lucide-react';
+import { Car, Trash2, Plus, Pencil } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
@@ -19,9 +19,12 @@ export default function Vehicles() {
   const [activeId, setActiveId] = useState(null);
   const [modal, setModal] = useState(null); // 'vehicle' | 'service'
   const [vehicleForm, setVehicleForm] = useState(emptyVehicleForm);
+  const [editingVehicleId, setEditingVehicleId] = useState(null);
   const [serviceForm, setServiceForm] = useState(emptyServiceForm);
+  const [editingServiceId, setEditingServiceId] = useState(null);
 
   const activeVehicleId = activeId || vehicles[0]?.id || null;
+  const activeVehicle = vehicles.find((v) => v.id === activeVehicleId) || null;
 
   const vehicleServices = useMemo(
     () => services.filter((s) => s.vehicleId === activeVehicleId).sort((a, b) => (a.date < b.date ? 1 : -1)),
@@ -33,13 +36,30 @@ export default function Vehicles() {
     [vehicleServices]
   );
 
-  function addVehicle(e) {
+  function openAddVehicle() {
+    setVehicleForm(emptyVehicleForm);
+    setEditingVehicleId(null);
+    setModal('vehicle');
+  }
+
+  function openEditVehicle(v) {
+    setVehicleForm({ name: v.name, notes: v.notes || '' });
+    setEditingVehicleId(v.id);
+    setModal('vehicle');
+  }
+
+  function saveVehicle(e) {
     e.preventDefault();
     if (!vehicleForm.name.trim()) return;
-    const v = { id: makeId(), ...vehicleForm };
-    setVehicles([...vehicles, v]);
-    setActiveId(v.id);
+    if (editingVehicleId) {
+      setVehicles(vehicles.map((v) => (v.id === editingVehicleId ? { id: editingVehicleId, ...vehicleForm } : v)));
+    } else {
+      const v = { id: makeId(), ...vehicleForm };
+      setVehicles([...vehicles, v]);
+      setActiveId(v.id);
+    }
     setVehicleForm(emptyVehicleForm);
+    setEditingVehicleId(null);
     setModal(null);
   }
 
@@ -47,18 +67,37 @@ export default function Vehicles() {
     setVehicles(vehicles.filter((v) => v.id !== id));
     setServices(services.filter((s) => s.vehicleId !== id));
     if (activeId === id) setActiveId(null);
+    setModal(null);
   }
 
-  function addService(e) {
+  function openAddService() {
+    setServiceForm(emptyServiceForm);
+    setEditingServiceId(null);
+    setModal('service');
+  }
+
+  function openEditService(s) {
+    setServiceForm({ type: s.type, date: s.date, mileage: s.mileage || '', nextDueDate: s.nextDueDate || '', notes: s.notes || '' });
+    setEditingServiceId(s.id);
+    setModal('service');
+  }
+
+  function saveService(e) {
     e.preventDefault();
     if (!activeVehicleId) return;
-    setServices([{ id: makeId(), vehicleId: activeVehicleId, ...serviceForm }, ...services]);
+    if (editingServiceId) {
+      setServices(services.map((s) => (s.id === editingServiceId ? { id: editingServiceId, vehicleId: activeVehicleId, ...serviceForm } : s)));
+    } else {
+      setServices([{ id: makeId(), vehicleId: activeVehicleId, ...serviceForm }, ...services]);
+    }
     setServiceForm(emptyServiceForm);
+    setEditingServiceId(null);
     setModal(null);
   }
 
   function removeService(id) {
     setServices(services.filter((s) => s.id !== id));
+    setModal(null);
   }
 
   return (
@@ -66,13 +105,18 @@ export default function Vehicles() {
       <PageHeader icon={Car} title="Vehicles" />
       <main className="app-main">
         <div className="flex-between" style={{ marginBottom: 14 }}>
-          <button className="btn" onClick={() => setModal('vehicle')}>
+          <button className="btn" onClick={openAddVehicle}>
             <Plus size={15} /> Add Vehicle
           </button>
-          {activeVehicleId && (
-            <button className="btn-danger-text" onClick={() => removeVehicle(activeVehicleId)}>
-              Remove this vehicle
-            </button>
+          {activeVehicle && (
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button className="btn-icon" onClick={() => openEditVehicle(activeVehicle)} aria-label="Edit vehicle">
+                <Pencil size={15} />
+              </button>
+              <button className="btn-danger-text" onClick={() => removeVehicle(activeVehicleId)}>
+                Remove
+              </button>
+            </div>
           )}
         </div>
 
@@ -135,9 +179,14 @@ export default function Vehicles() {
                       </div>
                       {s.notes && <div className="list-item-meta">{s.notes}</div>}
                     </div>
-                    <button className="btn-danger-text" onClick={() => removeService(s.id)} aria-label="Delete">
-                      <Trash2 size={16} />
-                    </button>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEditService(s)} aria-label="Edit">
+                        <Pencil size={15} />
+                      </button>
+                      <button className="btn-danger-text" onClick={() => removeService(s.id)} aria-label="Delete">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -147,12 +196,12 @@ export default function Vehicles() {
       </main>
 
       {vehicles.length > 0 && (
-        <Fab onClick={() => setModal('service')} label="Log service" />
+        <Fab onClick={openAddService} label="Log service" />
       )}
 
       {modal === 'vehicle' && (
-        <Sheet title="Add Vehicle" onClose={() => setModal(null)}>
-          <form className="form" onSubmit={addVehicle}>
+        <Sheet title={editingVehicleId ? 'Edit Vehicle' : 'Add Vehicle'} onClose={() => setModal(null)}>
+          <form className="form" onSubmit={saveVehicle}>
             <div className="field">
               <label>Vehicle Name</label>
               <input
@@ -172,14 +221,14 @@ export default function Vehicles() {
                 onChange={(e) => setVehicleForm({ ...vehicleForm, notes: e.target.value })}
               />
             </div>
-            <button type="submit" className="btn btn-primary btn-block">Save Vehicle</button>
+            <button type="submit" className="btn btn-primary btn-block">{editingVehicleId ? 'Save Changes' : 'Save Vehicle'}</button>
           </form>
         </Sheet>
       )}
 
       {modal === 'service' && (
-        <Sheet title="Log Service" onClose={() => setModal(null)}>
-          <form className="form" onSubmit={addService}>
+        <Sheet title={editingServiceId ? 'Edit Service' : 'Log Service'} onClose={() => setModal(null)}>
+          <form className="form" onSubmit={saveService}>
             <div className="field">
               <label>Type</label>
               <select value={serviceForm.type} onChange={(e) => setServiceForm({ ...serviceForm, type: e.target.value })}>
@@ -223,7 +272,7 @@ export default function Vehicles() {
                 onChange={(e) => setServiceForm({ ...serviceForm, notes: e.target.value })}
               />
             </div>
-            <button type="submit" className="btn btn-primary btn-block">Save Service</button>
+            <button type="submit" className="btn btn-primary btn-block">{editingServiceId ? 'Save Changes' : 'Save Service'}</button>
           </form>
         </Sheet>
       )}

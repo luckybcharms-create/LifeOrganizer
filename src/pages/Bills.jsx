@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Receipt, Trash2, Check } from 'lucide-react';
+import { Receipt, Trash2, Check, Pencil } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
@@ -25,6 +25,7 @@ export default function Bills() {
   const [bills, setBills] = useLocalStorage(KEYS.bills, []);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
 
   const { overdue, upcoming, paid } = useMemo(() => {
     const overdue = [];
@@ -48,9 +49,26 @@ export default function Bills() {
   function submit(e) {
     e.preventDefault();
     if (!form.name.trim() || !form.amount) return;
-    setBills([{ id: makeId(), ...form, paid: false }, ...bills]);
+    if (editingId) {
+      setBills(bills.map((b) => (b.id === editingId ? { ...form, id: editingId } : b)));
+    } else {
+      setBills([{ id: makeId(), ...form, paid: false }, ...bills]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
+  }
+
+  function openAdd() {
+    setForm(emptyForm);
+    setEditingId(null);
+    setShowForm(true);
+  }
+
+  function openEdit(b) {
+    setForm(b);
+    setEditingId(b.id);
+    setShowForm(true);
   }
 
   function togglePaid(bill) {
@@ -77,6 +95,9 @@ export default function Bills() {
           <div style={{ display: 'flex', gap: 4 }}>
             <button className="btn-icon" onClick={() => togglePaid(b)} aria-label="Mark paid" style={{ padding: 6 }}>
               <Check size={15} />
+            </button>
+            <button className="btn-icon" onClick={() => openEdit(b)} aria-label="Edit" style={{ padding: 6 }}>
+              <Pencil size={15} />
             </button>
             <button className="btn-danger-text" onClick={() => remove(b.id)} aria-label="Delete">
               <Trash2 size={16} />
@@ -123,10 +144,10 @@ export default function Bills() {
         )}
       </main>
 
-      <Fab onClick={() => setShowForm(true)} label="Add bill" />
+      <Fab onClick={openAdd} label="Add bill" />
 
       {showForm && (
-        <Sheet title="Add Bill" onClose={() => setShowForm(false)}>
+        <Sheet title={editingId ? 'Edit Bill' : 'Add Bill'} onClose={() => setShowForm(false)}>
           <form className="form" onSubmit={submit}>
             <div className="field">
               <label>Bill Name</label>
@@ -169,7 +190,7 @@ export default function Bills() {
               />
               Repeats monthly
             </label>
-            <button type="submit" className="btn btn-primary btn-block">Save Bill</button>
+            <button type="submit" className="btn btn-primary btn-block">{editingId ? 'Save Changes' : 'Save Bill'}</button>
           </form>
         </Sheet>
       )}

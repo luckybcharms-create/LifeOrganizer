@@ -22,6 +22,7 @@ export default function ImportantInfo() {
   const [memberForm, setMemberForm] = useState(emptyMember);
   const [editingMemberId, setEditingMemberId] = useState(null);
   const [passwordForm, setPasswordForm] = useState(emptyPassword);
+  const [editingPasswordId, setEditingPasswordId] = useState(null);
   const [revealed, setRevealed] = useState({});
 
   function openAddMember() {
@@ -56,17 +57,36 @@ export default function ImportantInfo() {
     setModal(null);
   }
 
-  function addPassword(e) {
+  function openAddPassword() {
+    setPasswordForm(emptyPassword);
+    setEditingPasswordId(null);
+    setModal('password');
+  }
+
+  function openEditPassword(p) {
+    setPasswordForm(p);
+    setEditingPasswordId(p.id);
+    setModal('password');
+  }
+
+  function savePassword(e) {
     e.preventDefault();
     if (!passwordForm.name.trim() || !passwordForm.password.trim()) return;
-    setInfo({ ...info, passwords: [{ id: makeId(), ...passwordForm }, ...(info.passwords || [])] });
+    const passwords = info.passwords || [];
+    if (editingPasswordId) {
+      setInfo({ ...info, passwords: passwords.map((p) => (p.id === editingPasswordId ? { ...passwordForm, id: editingPasswordId } : p)) });
+    } else {
+      setInfo({ ...info, passwords: [{ id: makeId(), ...passwordForm }, ...passwords] });
+    }
     setPasswordForm(emptyPassword);
+    setEditingPasswordId(null);
     setModal(null);
   }
 
   function removePassword(id) {
     setInfo({ ...info, passwords: info.passwords.filter((p) => p.id !== id) });
     setRevealed((r) => { const next = { ...r }; delete next[id]; return next; });
+    setModal(null);
   }
 
   function toggleReveal(id) {
@@ -120,7 +140,7 @@ export default function ImportantInfo() {
 
         <div className="flex-between">
           <div className="section-title mt-0">Passwords</div>
-          <button className="btn-icon" onClick={() => setModal('password')} aria-label="Add password">
+          <button className="btn-icon" onClick={openAddPassword} aria-label="Add password">
             <Plus size={18} />
           </button>
         </div>
@@ -150,9 +170,14 @@ export default function ImportantInfo() {
                   </div>
                   {p.notes && <div className="list-item-meta">{p.notes}</div>}
                 </div>
-                <button className="btn-danger-text" onClick={() => removePassword(p.id)} aria-label="Delete">
-                  <Trash2 size={16} />
-                </button>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEditPassword(p)} aria-label="Edit">
+                    <Pencil size={15} />
+                  </button>
+                  <button className="btn-danger-text" onClick={() => removePassword(p.id)} aria-label="Delete">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -221,8 +246,8 @@ export default function ImportantInfo() {
       )}
 
       {modal === 'password' && (
-        <Sheet title="Add Password" onClose={() => setModal(null)}>
-          <form className="form" onSubmit={addPassword}>
+        <Sheet title={editingPasswordId ? 'Edit Password' : 'Add Password'} onClose={() => setModal(null)}>
+          <form className="form" onSubmit={savePassword}>
             <div className="field">
               <label>Site / Service</label>
               <input
@@ -261,7 +286,12 @@ export default function ImportantInfo() {
                 onChange={(e) => setPasswordForm({ ...passwordForm, notes: e.target.value })}
               />
             </div>
-            <button type="submit" className="btn btn-primary btn-block">Save Password</button>
+            <button type="submit" className="btn btn-primary btn-block">{editingPasswordId ? 'Save Changes' : 'Save Password'}</button>
+            {editingPasswordId && (
+              <button type="button" className="btn-danger-text" style={{ alignSelf: 'center' }} onClick={() => removePassword(editingPasswordId)}>
+                Delete Password
+              </button>
+            )}
           </form>
         </Sheet>
       )}

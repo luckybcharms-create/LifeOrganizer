@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CheckSquare, Trash2, Flame } from 'lucide-react';
+import { CheckSquare, Trash2, Flame, Pencil } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
@@ -41,6 +41,7 @@ export default function Habits() {
   const [log, setLog] = useLocalStorage(KEYS.habitLog, {});
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
+  const [editingId, setEditingId] = useState(null);
 
   const days = useMemo(() => last7Days(), []);
   const today = todayISO();
@@ -49,9 +50,26 @@ export default function Habits() {
   function submit(e) {
     e.preventDefault();
     if (!name.trim()) return;
-    setHabits([...habits, { id: makeId(), name }]);
+    if (editingId) {
+      setHabits(habits.map((h) => (h.id === editingId ? { ...h, name } : h)));
+    } else {
+      setHabits([...habits, { id: makeId(), name }]);
+    }
     setName('');
+    setEditingId(null);
     setShowForm(false);
+  }
+
+  function openAdd() {
+    setName('');
+    setEditingId(null);
+    setShowForm(true);
+  }
+
+  function openEdit(h) {
+    setName(h.name);
+    setEditingId(h.id);
+    setShowForm(true);
   }
 
   function toggleToday(habitId) {
@@ -96,6 +114,9 @@ export default function Habits() {
                   >
                     {doneToday ? 'Done Today' : 'Mark Today'}
                   </button>
+                  <button className="btn-icon" style={{ padding: 8 }} onClick={() => openEdit(h)} aria-label="Edit">
+                    <Pencil size={15} />
+                  </button>
                   <button className="btn-danger-text" onClick={() => remove(h.id)} aria-label="Delete">
                     <Trash2 size={16} />
                   </button>
@@ -113,10 +134,10 @@ export default function Habits() {
         })}
       </main>
 
-      <Fab onClick={() => setShowForm(true)} label="Add habit" />
+      <Fab onClick={openAdd} label="Add habit" />
 
       {showForm && (
-        <Sheet title="Add Habit" onClose={() => setShowForm(false)}>
+        <Sheet title={editingId ? 'Edit Habit' : 'Add Habit'} onClose={() => setShowForm(false)}>
           <form className="form" onSubmit={submit}>
             <div className="field">
               <label>Habit</label>
@@ -128,7 +149,7 @@ export default function Habits() {
                 required
               />
             </div>
-            <button type="submit" className="btn btn-primary btn-block">Save Habit</button>
+            <button type="submit" className="btn btn-primary btn-block">{editingId ? 'Save Changes' : 'Save Habit'}</button>
           </form>
         </Sheet>
       )}

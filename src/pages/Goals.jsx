@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Target, Trash2 } from 'lucide-react';
+import { Target, Trash2, Pencil } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
@@ -16,6 +16,7 @@ export default function Goals() {
   const [filter, setFilter] = useState('short');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
 
   const filtered = useMemo(() => {
     const list = goals.filter((g) => g.term === filter);
@@ -28,8 +29,13 @@ export default function Goals() {
   function submit(e) {
     e.preventDefault();
     if (!form.title.trim()) return;
-    setGoals([{ id: makeId(), ...form, completed: false }, ...goals]);
+    if (editingId) {
+      setGoals(goals.map((g) => (g.id === editingId ? { ...g, ...form } : g)));
+    } else {
+      setGoals([{ id: makeId(), ...form, completed: false }, ...goals]);
+    }
     setForm({ ...emptyForm, term: filter });
+    setEditingId(null);
     setShowForm(false);
   }
 
@@ -39,6 +45,20 @@ export default function Goals() {
 
   function remove(id) {
     setGoals(goals.filter((g) => g.id !== id));
+    setShowForm(false);
+    setEditingId(null);
+  }
+
+  function openAdd() {
+    setForm({ ...emptyForm, term: filter });
+    setEditingId(null);
+    setShowForm(true);
+  }
+
+  function openEdit(g) {
+    setForm({ title: g.title, term: g.term, targetDate: g.targetDate || '', notes: g.notes || '' });
+    setEditingId(g.id);
+    setShowForm(true);
   }
 
   function renderGoal(g) {
@@ -57,9 +77,14 @@ export default function Goals() {
             {g.notes && <div className="list-item-meta">{g.notes}</div>}
           </div>
         </label>
-        <button className="btn-danger-text" onClick={() => remove(g.id)} aria-label="Delete">
-          <Trash2 size={16} />
-        </button>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEdit(g)} aria-label="Edit">
+            <Pencil size={15} />
+          </button>
+          <button className="btn-danger-text" onClick={() => remove(g.id)} aria-label="Delete">
+            <Trash2 size={16} />
+          </button>
+        </div>
       </div>
     );
   }
@@ -92,10 +117,10 @@ export default function Goals() {
         )}
       </main>
 
-      <Fab onClick={() => { setForm({ ...emptyForm, term: filter }); setShowForm(true); }} label="Add goal" />
+      <Fab onClick={openAdd} label="Add goal" />
 
       {showForm && (
-        <Sheet title="Add Goal" onClose={() => setShowForm(false)}>
+        <Sheet title={editingId ? 'Edit Goal' : 'Add Goal'} onClose={() => setShowForm(false)}>
           <form className="form" onSubmit={submit}>
             <div className="field">
               <label>Goal</label>
@@ -130,7 +155,7 @@ export default function Goals() {
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
               />
             </div>
-            <button type="submit" className="btn btn-primary btn-block">Save Goal</button>
+            <button type="submit" className="btn btn-primary btn-block">{editingId ? 'Save Changes' : 'Save Goal'}</button>
           </form>
         </Sheet>
       )}

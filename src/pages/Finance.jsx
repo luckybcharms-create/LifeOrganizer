@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Wallet, Trash2 } from 'lucide-react';
+import { Wallet, Trash2, Pencil } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
@@ -19,6 +19,7 @@ export default function Finance() {
   const [transactions, setTransactions] = useLocalStorage(KEYS.finance, []);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
 
   const stats = useMemo(() => {
     let income = 0;
@@ -51,13 +52,32 @@ export default function Finance() {
   function submit(e) {
     e.preventDefault();
     if (!form.amount || Number(form.amount) <= 0) return;
-    setTransactions([{ id: makeId(), ...form }, ...transactions]);
+    if (editingId) {
+      setTransactions(transactions.map((t) => (t.id === editingId ? { id: editingId, ...form } : t)));
+    } else {
+      setTransactions([{ id: makeId(), ...form }, ...transactions]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowForm(false);
   }
 
   function remove(id) {
     setTransactions(transactions.filter((t) => t.id !== id));
+    setShowForm(false);
+    setEditingId(null);
+  }
+
+  function openAdd() {
+    setForm(emptyForm);
+    setEditingId(null);
+    setShowForm(true);
+  }
+
+  function openEdit(t) {
+    setForm(t);
+    setEditingId(t.id);
+    setShowForm(true);
   }
 
   const categories = form.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
@@ -107,9 +127,14 @@ export default function Finance() {
                   <span className={`amount ${t.type === 'income' ? 'income' : 'expense'}`}>
                     {t.type === 'income' ? '+' : '-'}{currency(t.amount)}
                   </span>
-                  <button className="btn-danger-text" onClick={() => remove(t.id)} aria-label="Delete">
-                    <Trash2 size={16} />
-                  </button>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEdit(t)} aria-label="Edit">
+                      <Pencil size={15} />
+                    </button>
+                    <button className="btn-danger-text" onClick={() => remove(t.id)} aria-label="Delete">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -117,10 +142,10 @@ export default function Finance() {
         )}
       </main>
 
-      <Fab onClick={() => setShowForm(true)} label="Log transaction" />
+      <Fab onClick={openAdd} label="Log transaction" />
 
       {showForm && (
-        <Sheet title="Log Transaction" onClose={() => setShowForm(false)}>
+        <Sheet title={editingId ? 'Edit Transaction' : 'Log Transaction'} onClose={() => setShowForm(false)}>
           <form className="form" onSubmit={submit}>
             <div className="segmented">
               <button
@@ -183,7 +208,7 @@ export default function Finance() {
               />
             </div>
 
-            <button type="submit" className="btn btn-primary btn-block">Save Transaction</button>
+            <button type="submit" className="btn btn-primary btn-block">{editingId ? 'Save Changes' : 'Save Transaction'}</button>
           </form>
         </Sheet>
       )}
