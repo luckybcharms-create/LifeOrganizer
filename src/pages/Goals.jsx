@@ -20,10 +20,16 @@ export default function Goals() {
   const [editingId, setEditingId] = useState(null);
 
   const filtered = useMemo(() => {
+    const byTargetDate = (a, b) => {
+      if (!a.targetDate && !b.targetDate) return 0;
+      if (!a.targetDate) return 1;
+      if (!b.targetDate) return -1;
+      return a.targetDate < b.targetDate ? -1 : 1;
+    };
     const list = goals.filter((g) => g.term === filter);
     return {
-      active: list.filter((g) => !g.completed),
-      completed: list.filter((g) => g.completed),
+      active: list.filter((g) => !g.completed).sort(byTargetDate),
+      completed: list.filter((g) => g.completed).sort(byTargetDate),
     };
   }, [goals, filter]);
 

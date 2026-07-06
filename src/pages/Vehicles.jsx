@@ -11,14 +11,14 @@ import EmptyState from '../components/EmptyState';
 import SwipeableRow from '../components/SwipeableRow';
 
 const SERVICE_TYPES = ['Oil Change', 'Tire Rotation', 'Brake Service', 'Battery', 'Inspection', 'Other'];
-const emptyVehicleForm = { name: '', notes: '' };
+const emptyVehicleForm = { name: '', tagNumber: '', vin: '', oilType: '', notes: '' };
 const emptyServiceForm = { type: 'Oil Change', date: todayISO(), mileage: '', nextDueDate: '', notes: '' };
 
 export default function Vehicles() {
   const [vehicles, setVehicles] = useLocalStorage(KEYS.vehicles, []);
   const [services, setServices] = useLocalStorage(KEYS.vehicleServices, []);
   const [activeId, setActiveId] = useState(null);
-  const [modal, setModal] = useState(null); // 'vehicle' | 'service'
+  const [modal, setModal] = useState(null); // 'vehicle' | 'view' | 'service'
   const [vehicleForm, setVehicleForm] = useState(emptyVehicleForm);
   const [editingVehicleId, setEditingVehicleId] = useState(null);
   const [serviceForm, setServiceForm] = useState(emptyServiceForm);
@@ -44,9 +44,19 @@ export default function Vehicles() {
   }
 
   function openEditVehicle(v) {
-    setVehicleForm({ name: v.name, notes: v.notes || '' });
+    setVehicleForm({
+      name: v.name,
+      tagNumber: v.tagNumber || '',
+      vin: v.vin || '',
+      oilType: v.oilType || '',
+      notes: v.notes || '',
+    });
     setEditingVehicleId(v.id);
     setModal('vehicle');
+  }
+
+  function openViewVehicle() {
+    setModal('view');
   }
 
   function saveVehicle(e) {
@@ -110,14 +120,9 @@ export default function Vehicles() {
             <Plus size={15} /> Add Vehicle
           </button>
           {activeVehicle && (
-            <div style={{ display: 'flex', gap: 4 }}>
-              <button className="btn-icon" onClick={() => openEditVehicle(activeVehicle)} aria-label="Edit vehicle">
-                <Pencil size={15} />
-              </button>
-              <button className="btn-danger-text" onClick={() => removeVehicle(activeVehicleId)}>
-                Remove
-              </button>
-            </div>
+            <button className="btn-danger-text" onClick={() => removeVehicle(activeVehicleId)}>
+              Remove
+            </button>
           )}
         </div>
 
@@ -138,6 +143,28 @@ export default function Vehicles() {
                 </button>
               ))}
             </div>
+
+            {activeVehicle && (
+              <button
+                className="card"
+                style={{ width: '100%', textAlign: 'left', border: '1px solid var(--border-soft)', background: 'var(--bg-card)', cursor: 'pointer' }}
+                onClick={openViewVehicle}
+              >
+                <div className="flex-between">
+                  <div className="card-title" style={{ marginBottom: 0 }}>Vehicle Details</div>
+                  <Pencil size={14} color="var(--text-faint)" />
+                </div>
+                {(activeVehicle.tagNumber || activeVehicle.oilType || activeVehicle.vin) ? (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                    {activeVehicle.tagNumber && <span className="badge badge-neutral">Tag: {activeVehicle.tagNumber}</span>}
+                    {activeVehicle.oilType && <span className="badge badge-neutral">Oil: {activeVehicle.oilType}</span>}
+                    {activeVehicle.vin && <span className="badge badge-neutral">VIN: {activeVehicle.vin}</span>}
+                  </div>
+                ) : (
+                  <p className="muted" style={{ marginTop: 8 }}>Tap to view or add tag number, oil type, VIN, and more.</p>
+                )}
+              </button>
+            )}
 
             {upcoming.length > 0 && (
               <>
@@ -200,6 +227,32 @@ export default function Vehicles() {
         <Fab onClick={openAddService} label="Log service" />
       )}
 
+      {modal === 'view' && activeVehicle && (
+        <Sheet title={activeVehicle.name} onClose={() => setModal(null)}>
+          <div className="form">
+            <div className="field">
+              <label>Tag Number</label>
+              <p style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>{activeVehicle.tagNumber || '—'}</p>
+            </div>
+            <div className="field">
+              <label>VIN</label>
+              <p style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>{activeVehicle.vin || '—'}</p>
+            </div>
+            <div className="field">
+              <label>Oil Type</label>
+              <p style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>{activeVehicle.oilType || '—'}</p>
+            </div>
+            <div className="field">
+              <label>Notes</label>
+              <p style={{ fontSize: 14, color: 'var(--text-dim)', margin: 0 }}>{activeVehicle.notes || '—'}</p>
+            </div>
+            <button type="button" className="btn btn-primary btn-block" onClick={() => openEditVehicle(activeVehicle)}>
+              <Pencil size={16} /> Edit Vehicle
+            </button>
+          </div>
+        </Sheet>
+      )}
+
       {modal === 'vehicle' && (
         <Sheet title={editingVehicleId ? 'Edit Vehicle' : 'Add Vehicle'} onClose={() => setModal(null)}>
           <form className="form" onSubmit={saveVehicle}>
@@ -213,11 +266,40 @@ export default function Vehicles() {
                 required
               />
             </div>
+            <div className="form-row">
+              <div className="field">
+                <label>Tag Number</label>
+                <input
+                  type="text"
+                  placeholder="License plate"
+                  value={vehicleForm.tagNumber}
+                  onChange={(e) => setVehicleForm({ ...vehicleForm, tagNumber: e.target.value })}
+                />
+              </div>
+              <div className="field">
+                <label>Oil Type</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 5W-30 Synthetic"
+                  value={vehicleForm.oilType}
+                  onChange={(e) => setVehicleForm({ ...vehicleForm, oilType: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="field">
+              <label>VIN</label>
+              <input
+                type="text"
+                placeholder="Optional"
+                value={vehicleForm.vin}
+                onChange={(e) => setVehicleForm({ ...vehicleForm, vin: e.target.value })}
+              />
+            </div>
             <div className="field">
               <label>Notes</label>
               <input
                 type="text"
-                placeholder="Plate, VIN, etc. (optional)"
+                placeholder="Insurance info, reminders, etc. (optional)"
                 value={vehicleForm.notes}
                 onChange={(e) => setVehicleForm({ ...vehicleForm, notes: e.target.value })}
               />
