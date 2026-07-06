@@ -65,8 +65,19 @@ export default function Vehicles() {
     <>
       <PageHeader icon={Car} title="Vehicles" />
       <main className="app-main">
+        <div className="flex-between" style={{ marginBottom: 14 }}>
+          <button className="btn" onClick={() => setModal('vehicle')}>
+            <Plus size={15} /> Add Vehicle
+          </button>
+          {activeVehicleId && (
+            <button className="btn-danger-text" onClick={() => removeVehicle(activeVehicleId)}>
+              Remove this vehicle
+            </button>
+          )}
+        </div>
+
         {vehicles.length === 0 && (
-          <EmptyState icon={Car} message="No vehicles added yet. Tap + below to add your first vehicle." />
+          <EmptyState icon={Car} message="No vehicles added yet. Tap “Add Vehicle” above to add your first one." />
         )}
 
         {vehicles.length > 0 && (
@@ -81,17 +92,6 @@ export default function Vehicles() {
                   {v.name}
                 </button>
               ))}
-            </div>
-
-            <div className="flex-between" style={{ marginBottom: 14 }}>
-              <button className="btn" onClick={() => setModal('vehicle')}>
-                <Plus size={15} /> Vehicle
-              </button>
-              {activeVehicleId && (
-                <button className="btn-danger-text" onClick={() => removeVehicle(activeVehicleId)}>
-                  Remove this vehicle
-                </button>
-              )}
             </div>
 
             {upcoming.length > 0 && (
