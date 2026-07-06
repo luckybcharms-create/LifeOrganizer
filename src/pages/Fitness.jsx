@@ -9,6 +9,7 @@ import Sheet from '../components/Sheet';
 import Fab from '../components/Fab';
 import EmptyState from '../components/EmptyState';
 import StatTile from '../components/StatTile';
+import SwipeableRow from '../components/SwipeableRow';
 
 const emptyForm = { date: todayISO(), exercise: '', sets: '', reps: '', notes: '' };
 
@@ -85,23 +86,23 @@ export default function Fitness() {
           <div className="card" key={date}>
             <div className="card-title">{formatDate(date)}</div>
             {entries.map((w) => (
-              <div className="list-item" key={w.id}>
-                <div className="list-item-main">
-                  <div className="list-item-title">{w.exercise}</div>
-                  <div className="list-item-sub">
-                    {w.sets || 0} sets x {w.reps || 0} reps
+              <SwipeableRow
+                key={w.id}
+                actions={[
+                  { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEdit(w) },
+                  { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => remove(w.id) },
+                ]}
+              >
+                <div className="list-item">
+                  <div className="list-item-main">
+                    <div className="list-item-title">{w.exercise}</div>
+                    <div className="list-item-sub">
+                      {w.sets || 0} sets x {w.reps || 0} reps
+                    </div>
+                    {w.notes && <div className="list-item-meta">{w.notes}</div>}
                   </div>
-                  {w.notes && <div className="list-item-meta">{w.notes}</div>}
                 </div>
-                <div className="list-item-side" style={{ flexDirection: 'row' }}>
-                  <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEdit(w)} aria-label="Edit">
-                    <Pencil size={15} />
-                  </button>
-                  <button className="btn-danger-text" onClick={() => remove(w.id)} aria-label="Delete">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
+              </SwipeableRow>
             ))}
           </div>
         ))}

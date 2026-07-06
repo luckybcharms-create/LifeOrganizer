@@ -8,6 +8,7 @@ import PageHeader from '../components/PageHeader';
 import Sheet from '../components/Sheet';
 import Fab from '../components/Fab';
 import EmptyState from '../components/EmptyState';
+import SwipeableRow from '../components/SwipeableRow';
 
 const SERVICE_TYPES = ['Oil Change', 'Tire Rotation', 'Brake Service', 'Battery', 'Inspection', 'Other'];
 const emptyVehicleForm = { name: '', notes: '' };
@@ -171,23 +172,23 @@ export default function Vehicles() {
             {vehicleServices.length > 0 && (
               <div className="card">
                 {vehicleServices.map((s) => (
-                  <div className="list-item" key={s.id}>
-                    <div className="list-item-main">
-                      <div className="list-item-title">{s.type}</div>
-                      <div className="list-item-sub">
-                        {formatDate(s.date)}{s.mileage ? ` · ${Number(s.mileage).toLocaleString()} mi` : ''}
+                  <SwipeableRow
+                    key={s.id}
+                    actions={[
+                      { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEditService(s) },
+                      { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => removeService(s.id) },
+                    ]}
+                  >
+                    <div className="list-item">
+                      <div className="list-item-main">
+                        <div className="list-item-title">{s.type}</div>
+                        <div className="list-item-sub">
+                          {formatDate(s.date)}{s.mileage ? ` · ${Number(s.mileage).toLocaleString()} mi` : ''}
+                        </div>
+                        {s.notes && <div className="list-item-meta">{s.notes}</div>}
                       </div>
-                      {s.notes && <div className="list-item-meta">{s.notes}</div>}
                     </div>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEditService(s)} aria-label="Edit">
-                        <Pencil size={15} />
-                      </button>
-                      <button className="btn-danger-text" onClick={() => removeService(s.id)} aria-label="Delete">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
+                  </SwipeableRow>
                 ))}
               </div>
             )}

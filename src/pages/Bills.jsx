@@ -9,6 +9,7 @@ import Sheet from '../components/Sheet';
 import Fab from '../components/Fab';
 import EmptyState from '../components/EmptyState';
 import StatTile from '../components/StatTile';
+import SwipeableRow from '../components/SwipeableRow';
 
 const emptyForm = { name: '', amount: '', dueDate: todayISO(), recurring: true, paid: false };
 
@@ -85,26 +86,24 @@ export default function Bills() {
 
   function renderBill(b) {
     return (
-      <div className="list-item" key={b.id}>
-        <div className="list-item-main">
-          <div className="list-item-title">{b.name} {dueBadge(b)}</div>
-          <div className="list-item-sub">Due {formatDate(b.dueDate)}{b.recurring ? ' · Monthly' : ''}</div>
-        </div>
-        <div className="list-item-side">
-          <span className="amount">{currency(b.amount)}</span>
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button className="btn-icon" onClick={() => togglePaid(b)} aria-label="Mark paid" style={{ padding: 6 }}>
-              <Check size={15} />
-            </button>
-            <button className="btn-icon" onClick={() => openEdit(b)} aria-label="Edit" style={{ padding: 6 }}>
-              <Pencil size={15} />
-            </button>
-            <button className="btn-danger-text" onClick={() => remove(b.id)} aria-label="Delete">
-              <Trash2 size={16} />
-            </button>
+      <SwipeableRow
+        key={b.id}
+        actions={[
+          { label: b.paid ? 'Unpay' : 'Paid', tone: 'positive', icon: <Check size={16} />, onClick: () => togglePaid(b) },
+          { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEdit(b) },
+          { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => remove(b.id) },
+        ]}
+      >
+        <div className="list-item">
+          <div className="list-item-main">
+            <div className="list-item-title">{b.name} {dueBadge(b)}</div>
+            <div className="list-item-sub">Due {formatDate(b.dueDate)}{b.recurring ? ' · Monthly' : ''}</div>
+          </div>
+          <div className="list-item-side">
+            <span className="amount">{currency(b.amount)}</span>
           </div>
         </div>
-      </div>
+      </SwipeableRow>
     );
   }
 

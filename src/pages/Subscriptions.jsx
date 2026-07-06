@@ -9,6 +9,7 @@ import Sheet from '../components/Sheet';
 import Fab from '../components/Fab';
 import EmptyState from '../components/EmptyState';
 import StatTile from '../components/StatTile';
+import SwipeableRow from '../components/SwipeableRow';
 
 const emptyForm = { name: '', cost: '', cycle: 'monthly', renewalDate: todayISO(), notes: '' };
 
@@ -82,29 +83,29 @@ export default function Subscriptions() {
             {sorted.map((s) => {
               const d = daysUntil(s.renewalDate);
               return (
-                <div className="list-item" key={s.id}>
-                  <div className="list-item-main">
-                    <div className="list-item-title">
-                      {s.name}
-                      <span className="badge badge-neutral">{s.cycle === 'annual' ? 'Annual' : 'Monthly'}</span>
+                <SwipeableRow
+                  key={s.id}
+                  actions={[
+                    { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEdit(s) },
+                    { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => remove(s.id) },
+                  ]}
+                >
+                  <div className="list-item">
+                    <div className="list-item-main">
+                      <div className="list-item-title">
+                        {s.name}
+                        <span className="badge badge-neutral">{s.cycle === 'annual' ? 'Annual' : 'Monthly'}</span>
+                      </div>
+                      <div className="list-item-sub">
+                        Renews {formatDate(s.renewalDate)} {d >= 0 ? `(in ${d}d)` : `(${Math.abs(d)}d overdue)`}
+                      </div>
+                      {s.notes && <div className="list-item-meta">{s.notes}</div>}
                     </div>
-                    <div className="list-item-sub">
-                      Renews {formatDate(s.renewalDate)} {d >= 0 ? `(in ${d}d)` : `(${Math.abs(d)}d overdue)`}
+                    <div className="list-item-side">
+                      <span className="amount">{currency(s.cost)}</span>
                     </div>
-                    {s.notes && <div className="list-item-meta">{s.notes}</div>}
                   </div>
-                  <div className="list-item-side">
-                    <span className="amount">{currency(s.cost)}</span>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEdit(s)} aria-label="Edit">
-                        <Pencil size={15} />
-                      </button>
-                      <button className="btn-danger-text" onClick={() => remove(s.id)} aria-label="Delete">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                </SwipeableRow>
               );
             })}
           </div>

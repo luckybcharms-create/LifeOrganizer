@@ -8,6 +8,7 @@ import PageHeader from '../components/PageHeader';
 import Sheet from '../components/Sheet';
 import Fab from '../components/Fab';
 import EmptyState from '../components/EmptyState';
+import SwipeableRow from '../components/SwipeableRow';
 
 function last7Days() {
   const days = [];
@@ -98,15 +99,22 @@ export default function Habits() {
           const streak = calcStreak(dates);
           const doneToday = dates.includes(today);
           return (
-            <div className="card" key={h.id}>
-              <div className="flex-between" style={{ marginBottom: 12 }}>
-                <div>
-                  <div className="list-item-title">{h.name}</div>
-                  <div className="list-item-sub" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Flame size={13} color="var(--amber)" /> {streak} day streak
+            <SwipeableRow
+              key={h.id}
+              className="card-swipe-row"
+              actions={[
+                { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEdit(h) },
+                { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => remove(h.id) },
+              ]}
+            >
+              <div className="card">
+                <div className="flex-between" style={{ marginBottom: 12 }}>
+                  <div>
+                    <div className="list-item-title">{h.name}</div>
+                    <div className="list-item-sub" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Flame size={13} color="var(--amber)" /> {streak} day streak
+                    </div>
                   </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <button
                     className="btn"
                     onClick={() => toggleToday(h.id)}
@@ -114,22 +122,16 @@ export default function Habits() {
                   >
                     {doneToday ? 'Done Today' : 'Mark Today'}
                   </button>
-                  <button className="btn-icon" style={{ padding: 8 }} onClick={() => openEdit(h)} aria-label="Edit">
-                    <Pencil size={15} />
-                  </button>
-                  <button className="btn-danger-text" onClick={() => remove(h.id)} aria-label="Delete">
-                    <Trash2 size={16} />
-                  </button>
+                </div>
+                <div className="habit-grid">
+                  {days.map((d, i) => (
+                    <div key={d} className={`habit-day ${dates.includes(d) ? 'done' : ''}`}>
+                      {dayLabels[new Date(d + 'T00:00:00').getDay()]}
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="habit-grid">
-                {days.map((d, i) => (
-                  <div key={d} className={`habit-day ${dates.includes(d) ? 'done' : ''}`}>
-                    {dayLabels[new Date(d + 'T00:00:00').getDay()]}
-                  </div>
-                ))}
-              </div>
-            </div>
+            </SwipeableRow>
           );
         })}
       </main>

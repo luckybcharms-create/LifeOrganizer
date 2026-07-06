@@ -1,6 +1,7 @@
 export const KEYS = {
   fitness: 'lo_fitness_workouts',
   finance: 'lo_finance_transactions',
+  paymentCards: 'lo_payment_cards',
   bills: 'lo_bills',
   subscriptions: 'lo_subscriptions',
   importantInfo: 'lo_important_info',

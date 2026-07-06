@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Target, Trash2, Pencil } from 'lucide-react';
+import { Target, Trash2, Pencil, Check } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
@@ -8,6 +8,7 @@ import PageHeader from '../components/PageHeader';
 import Sheet from '../components/Sheet';
 import Fab from '../components/Fab';
 import EmptyState from '../components/EmptyState';
+import SwipeableRow from '../components/SwipeableRow';
 
 const emptyForm = { title: '', term: 'short', targetDate: '', notes: '' };
 
@@ -63,29 +64,30 @@ export default function Goals() {
 
   function renderGoal(g) {
     return (
-      <div className="list-item" key={g.id}>
-        <label className="checkbox-field" style={{ alignItems: 'flex-start', flex: 1 }}>
-          <input type="checkbox" checked={g.completed} onChange={() => toggle(g.id)} />
-          <div className="list-item-main">
-            <div
-              className="list-item-title"
-              style={g.completed ? { textDecoration: 'line-through', color: 'var(--text-faint)' } : undefined}
-            >
-              {g.title}
+      <SwipeableRow
+        key={g.id}
+        actions={[
+          { label: g.completed ? 'Undo' : 'Complete', tone: 'positive', icon: <Check size={16} />, onClick: () => toggle(g.id) },
+          { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEdit(g) },
+          { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => remove(g.id) },
+        ]}
+      >
+        <div className="list-item">
+          <label className="checkbox-field" style={{ alignItems: 'flex-start', flex: 1 }}>
+            <input type="checkbox" checked={g.completed} onChange={() => toggle(g.id)} />
+            <div className="list-item-main">
+              <div
+                className="list-item-title"
+                style={g.completed ? { textDecoration: 'line-through', color: 'var(--text-faint)' } : undefined}
+              >
+                {g.title}
+              </div>
+              {g.targetDate && <div className="list-item-sub">Target: {formatDate(g.targetDate)}</div>}
+              {g.notes && <div className="list-item-meta">{g.notes}</div>}
             </div>
-            {g.targetDate && <div className="list-item-sub">Target: {formatDate(g.targetDate)}</div>}
-            {g.notes && <div className="list-item-meta">{g.notes}</div>}
-          </div>
-        </label>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEdit(g)} aria-label="Edit">
-            <Pencil size={15} />
-          </button>
-          <button className="btn-danger-text" onClick={() => remove(g.id)} aria-label="Delete">
-            <Trash2 size={16} />
-          </button>
+          </label>
         </div>
-      </div>
+      </SwipeableRow>
     );
   }
 

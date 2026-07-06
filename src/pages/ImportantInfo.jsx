@@ -6,6 +6,7 @@ import { makeId } from '../utils/id';
 import PageHeader from '../components/PageHeader';
 import Sheet from '../components/Sheet';
 import EmptyState from '../components/EmptyState';
+import SwipeableRow from '../components/SwipeableRow';
 
 const defaultInfo = {
   familyMembers: [],
@@ -120,20 +121,25 @@ export default function ImportantInfo() {
         {familyMembers.length > 0 && (
           <div className="card">
             {familyMembers.map((m) => (
-              <div className="list-item" key={m.id}>
-                <div className="list-item-main">
-                  <div className="list-item-title">
-                    {m.name}
-                    {m.relationship && <span className="badge badge-neutral">{m.relationship}</span>}
-                    {m.bloodType && <span className="badge badge-neutral">{m.bloodType}</span>}
+              <SwipeableRow
+                key={m.id}
+                actions={[
+                  { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEditMember(m) },
+                  { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => removeMember(m.id) },
+                ]}
+              >
+                <div className="list-item">
+                  <div className="list-item-main">
+                    <div className="list-item-title">
+                      {m.name}
+                      {m.relationship && <span className="badge badge-neutral">{m.relationship}</span>}
+                      {m.bloodType && <span className="badge badge-neutral">{m.bloodType}</span>}
+                    </div>
+                    {m.allergies && <div className="list-item-sub">Allergies: {m.allergies}</div>}
+                    {m.medicalNotes && <div className="list-item-meta">{m.medicalNotes}</div>}
                   </div>
-                  {m.allergies && <div className="list-item-sub">Allergies: {m.allergies}</div>}
-                  {m.medicalNotes && <div className="list-item-meta">{m.medicalNotes}</div>}
                 </div>
-                <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEditMember(m)} aria-label="Edit">
-                  <Pencil size={15} />
-                </button>
-              </div>
+              </SwipeableRow>
             ))}
           </div>
         )}
@@ -153,32 +159,32 @@ export default function ImportantInfo() {
         {passwords.length > 0 && (
           <div className="card">
             {passwords.map((p) => (
-              <div className="list-item" key={p.id}>
-                <div className="list-item-main">
-                  <div className="list-item-title">{p.name}</div>
-                  {p.username && <div className="list-item-sub">{p.username}</div>}
-                  <div className="list-item-meta" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                    <span style={{ fontFamily: 'ui-monospace, monospace', letterSpacing: revealed[p.id] ? 'normal' : '2px' }}>
-                      {revealed[p.id] ? p.password : '••••••••'}
-                    </span>
-                    <button className="btn-icon" style={{ padding: 4 }} onClick={() => toggleReveal(p.id)} aria-label="Toggle visibility">
-                      {revealed[p.id] ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                    <button className="btn-icon" style={{ padding: 4 }} onClick={() => copyPassword(p.password)} aria-label="Copy password">
-                      <Copy size={14} />
-                    </button>
+              <SwipeableRow
+                key={p.id}
+                actions={[
+                  { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEditPassword(p) },
+                  { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => removePassword(p.id) },
+                ]}
+              >
+                <div className="list-item">
+                  <div className="list-item-main">
+                    <div className="list-item-title">{p.name}</div>
+                    {p.username && <div className="list-item-sub">{p.username}</div>}
+                    <div className="list-item-meta" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                      <span style={{ fontFamily: 'ui-monospace, monospace', letterSpacing: revealed[p.id] ? 'normal' : '2px' }}>
+                        {revealed[p.id] ? p.password : '••••••••'}
+                      </span>
+                      <button className="btn-icon" style={{ padding: 4 }} onClick={() => toggleReveal(p.id)} aria-label="Toggle visibility">
+                        {revealed[p.id] ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                      <button className="btn-icon" style={{ padding: 4 }} onClick={() => copyPassword(p.password)} aria-label="Copy password">
+                        <Copy size={14} />
+                      </button>
+                    </div>
+                    {p.notes && <div className="list-item-meta">{p.notes}</div>}
                   </div>
-                  {p.notes && <div className="list-item-meta">{p.notes}</div>}
                 </div>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEditPassword(p)} aria-label="Edit">
-                    <Pencil size={15} />
-                  </button>
-                  <button className="btn-danger-text" onClick={() => removePassword(p.id)} aria-label="Delete">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
+              </SwipeableRow>
             ))}
           </div>
         )}

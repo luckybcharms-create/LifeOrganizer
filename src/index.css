@@ -318,11 +318,43 @@ h1, h2, h3, p {
 
 .btn-icon {
   padding: 8px;
+  min-width: 40px;
+  min-height: 40px;
   border-radius: 10px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   color: var(--text);
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Tactile press feedback, iOS-style, on every tappable control */
+.btn,
+.btn-icon,
+.nav-item,
+.fab,
+.swipe-action,
+.segmented button {
+  transition: transform 0.12s ease, opacity 0.12s ease, filter 0.12s ease;
+}
+
+.btn:active,
+.btn-icon:active,
+.fab:active {
+  transform: scale(0.95);
+  opacity: 0.85;
+}
+
+.nav-item:active {
+  transform: scale(0.92);
+}
+
+@media (hover: hover) {
+  .btn:hover,
+  .btn-icon:hover {
+    filter: brightness(1.08);
+  }
 }
 
 .fab {
@@ -353,6 +385,10 @@ h1, h2, h3, p {
 }
 
 .list-item:last-child {
+  border-bottom: none;
+}
+
+.swipe-row:last-child .list-item {
   border-bottom: none;
 }
 
@@ -398,6 +434,78 @@ h1, h2, h3, p {
 
 .amount.income { color: var(--green); }
 .amount.expense { color: var(--red); }
+
+/* Swipeable rows (iOS Mail / Reminders style swipe-to-reveal) */
+.swipe-row {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.swipe-row-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+}
+
+.swipe-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: none;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 0 16px;
+  min-width: 64px;
+  height: 100%;
+}
+
+.swipe-action:active {
+  filter: brightness(0.85);
+}
+
+.swipe-action-edit { background: var(--accent); }
+.swipe-action-positive { background: var(--green); }
+.swipe-action-delete { background: var(--red); }
+
+.swipe-row-content {
+  position: relative;
+  background: var(--bg-card);
+  touch-action: pan-y;
+  will-change: transform;
+}
+
+.swipe-row-content.dragging {
+  transition: none;
+}
+
+.swipe-row-content:not(.dragging) {
+  transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.swipe-row-content .list-item {
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+/* Modifier for swipe rows that wrap a whole standalone .card (e.g. Habits, Notes) instead of a list-item */
+.card-swipe-row {
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+}
+
+.card-swipe-row .swipe-row-content {
+  background: transparent;
+}
+
+.card-swipe-row .card {
+  margin-bottom: 0;
+}
 
 /* Badges */
 .badge {

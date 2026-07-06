@@ -9,6 +9,7 @@ import Sheet from '../components/Sheet';
 import Fab from '../components/Fab';
 import EmptyState from '../components/EmptyState';
 import StatTile from '../components/StatTile';
+import SwipeableRow from '../components/SwipeableRow';
 
 const emptyForm = { name: '', price: '', link: '', priority: 'medium', notes: '' };
 const priorityRank = { high: 0, medium: 1, low: 2 };
@@ -73,31 +74,31 @@ export default function Wishlist() {
         {sorted.length > 0 && (
           <div className="card">
             {sorted.map((i) => (
-              <div className="list-item" key={i.id}>
-                <div className="list-item-main">
-                  <div className="list-item-title">
-                    {i.name}
-                    <span className={`badge ${priorityBadge[i.priority]}`}>{i.priority}</span>
+              <SwipeableRow
+                key={i.id}
+                actions={[
+                  { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEdit(i) },
+                  { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => remove(i.id) },
+                ]}
+              >
+                <div className="list-item">
+                  <div className="list-item-main">
+                    <div className="list-item-title">
+                      {i.name}
+                      <span className={`badge ${priorityBadge[i.priority]}`}>{i.priority}</span>
+                    </div>
+                    {i.notes && <div className="list-item-meta">{i.notes}</div>}
+                    {i.link && (
+                      <a className="link-row" href={i.link} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                        View link <ExternalLink size={12} />
+                      </a>
+                    )}
                   </div>
-                  {i.notes && <div className="list-item-meta">{i.notes}</div>}
-                  {i.link && (
-                    <a className="link-row" href={i.link} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                      View link <ExternalLink size={12} />
-                    </a>
-                  )}
-                </div>
-                <div className="list-item-side">
-                  <span className="amount">{currency(i.price)}</span>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEdit(i)} aria-label="Edit">
-                      <Pencil size={15} />
-                    </button>
-                    <button className="btn-danger-text" onClick={() => remove(i.id)} aria-label="Delete">
-                      <Trash2 size={16} />
-                    </button>
+                  <div className="list-item-side">
+                    <span className="amount">{currency(i.price)}</span>
                   </div>
                 </div>
-              </div>
+              </SwipeableRow>
             ))}
           </div>
         )}

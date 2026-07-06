@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { TrendingUp, Trash2, Pencil } from 'lucide-react';
+import { TrendingUp, Trash2, Pencil, Check } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
@@ -9,6 +9,7 @@ import Sheet from '../components/Sheet';
 import Fab from '../components/Fab';
 import EmptyState from '../components/EmptyState';
 import StatTile from '../components/StatTile';
+import SwipeableRow from '../components/SwipeableRow';
 
 const emptySale = { date: todayISO(), amount: '', commission: '', notes: '' };
 const emptyTraining = { date: todayISO(), title: '', notes: '' };
@@ -132,24 +133,24 @@ export default function Career() {
             {salesSorted.length > 0 && (
               <div className="card">
                 {salesSorted.map((s) => (
-                  <div className="list-item" key={s.id}>
-                    <div className="list-item-main">
-                      <div className="list-item-title">{formatDate(s.date)}</div>
-                      {s.notes && <div className="list-item-meta">{s.notes}</div>}
-                    </div>
-                    <div className="list-item-side">
-                      <span className="amount income">{currency(s.amount)}</span>
-                      {s.commission && <span className="muted">Comm: {currency(s.commission)}</span>}
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEditSale(s)} aria-label="Edit">
-                          <Pencil size={15} />
-                        </button>
-                        <button className="btn-danger-text" onClick={() => setSales(sales.filter((x) => x.id !== s.id))}>
-                          <Trash2 size={16} />
-                        </button>
+                  <SwipeableRow
+                    key={s.id}
+                    actions={[
+                      { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEditSale(s) },
+                      { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => setSales(sales.filter((x) => x.id !== s.id)) },
+                    ]}
+                  >
+                    <div className="list-item">
+                      <div className="list-item-main">
+                        <div className="list-item-title">{formatDate(s.date)}</div>
+                        {s.notes && <div className="list-item-meta">{s.notes}</div>}
+                      </div>
+                      <div className="list-item-side">
+                        <span className="amount income">{currency(s.amount)}</span>
+                        {s.commission && <span className="muted">Comm: {currency(s.commission)}</span>}
                       </div>
                     </div>
-                  </div>
+                  </SwipeableRow>
                 ))}
               </div>
             )}
@@ -164,21 +165,21 @@ export default function Career() {
             {trainingSorted.length > 0 && (
               <div className="card">
                 {trainingSorted.map((t) => (
-                  <div className="list-item" key={t.id}>
-                    <div className="list-item-main">
-                      <div className="list-item-title">{t.title}</div>
-                      <div className="list-item-sub">{formatDate(t.date)}</div>
-                      {t.notes && <div className="list-item-meta">{t.notes}</div>}
+                  <SwipeableRow
+                    key={t.id}
+                    actions={[
+                      { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEditTraining(t) },
+                      { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => setTraining(training.filter((x) => x.id !== t.id)) },
+                    ]}
+                  >
+                    <div className="list-item">
+                      <div className="list-item-main">
+                        <div className="list-item-title">{t.title}</div>
+                        <div className="list-item-sub">{formatDate(t.date)}</div>
+                        {t.notes && <div className="list-item-meta">{t.notes}</div>}
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEditTraining(t)} aria-label="Edit">
-                        <Pencil size={15} />
-                      </button>
-                      <button className="btn-danger-text" onClick={() => setTraining(training.filter((x) => x.id !== t.id))}>
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
+                  </SwipeableRow>
                 ))}
               </div>
             )}
@@ -193,29 +194,30 @@ export default function Career() {
             {goals.length > 0 && (
               <div className="card">
                 {goals.map((g) => (
-                  <div className="list-item" key={g.id}>
-                    <label className="checkbox-field" style={{ alignItems: 'flex-start', flex: 1 }}>
-                      <input type="checkbox" checked={g.completed} onChange={() => toggleGoal(g.id)} />
-                      <div className="list-item-main">
-                        <div
-                          className="list-item-title"
-                          style={g.completed ? { textDecoration: 'line-through', color: 'var(--text-faint)' } : undefined}
-                        >
-                          {g.title}
+                  <SwipeableRow
+                    key={g.id}
+                    actions={[
+                      { label: g.completed ? 'Undo' : 'Complete', tone: 'positive', icon: <Check size={16} />, onClick: () => toggleGoal(g.id) },
+                      { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEditGoal(g) },
+                      { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => setGoals(goals.filter((x) => x.id !== g.id)) },
+                    ]}
+                  >
+                    <div className="list-item">
+                      <label className="checkbox-field" style={{ alignItems: 'flex-start', flex: 1 }}>
+                        <input type="checkbox" checked={g.completed} onChange={() => toggleGoal(g.id)} />
+                        <div className="list-item-main">
+                          <div
+                            className="list-item-title"
+                            style={g.completed ? { textDecoration: 'line-through', color: 'var(--text-faint)' } : undefined}
+                          >
+                            {g.title}
+                          </div>
+                          {g.targetDate && <div className="list-item-sub">Target: {formatDate(g.targetDate)}</div>}
+                          {g.notes && <div className="list-item-meta">{g.notes}</div>}
                         </div>
-                        {g.targetDate && <div className="list-item-sub">Target: {formatDate(g.targetDate)}</div>}
-                        {g.notes && <div className="list-item-meta">{g.notes}</div>}
-                      </div>
-                    </label>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn-icon" style={{ padding: 6 }} onClick={() => openEditGoal(g)} aria-label="Edit">
-                        <Pencil size={15} />
-                      </button>
-                      <button className="btn-danger-text" onClick={() => setGoals(goals.filter((x) => x.id !== g.id))}>
-                        <Trash2 size={16} />
-                      </button>
+                      </label>
                     </div>
-                  </div>
+                  </SwipeableRow>
                 ))}
               </div>
             )}
