@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { LayoutGrid } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
-import { todayISO, daysUntil, currency } from '../utils/date';
+import { todayISO, daysUntil, currency, parseLocalDate } from '../utils/date';
 import PageHeader from '../components/PageHeader';
 import StatTile from '../components/StatTile';
 import EmptyState from '../components/EmptyState';
@@ -61,7 +61,7 @@ export default function Dashboard({ onNavigate, visibility = {} }) {
   const workoutsThisWeek = useMemo(() => {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 7);
-    return workouts.filter((w) => new Date(w.date) >= cutoff).length;
+    return workouts.filter((w) => parseLocalDate(w.date) >= cutoff).length;
   }, [workouts]);
 
   return (

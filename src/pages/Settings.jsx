@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Settings as SettingsIcon, Download, Upload, LogOut, Mail, Sun, Moon } from 'lucide-react';
 import { KEYS } from '../utils/storageKeys';
 import { getAccount } from '../utils/auth';
+import { todayISO } from '../utils/date';
 import PageHeader from '../components/PageHeader';
 import { NAV_ITEMS, PINNED_KEYS } from '../components/BottomNav';
 
@@ -32,7 +33,7 @@ export default function Settings({ onLock, visibility = {}, setVisibility, theme
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `life-organizer-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `life-organizer-backup-${todayISO()}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();

@@ -3,7 +3,7 @@ import { Dumbbell, Trash2, Pencil } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
-import { todayISO, formatDate } from '../utils/date';
+import { todayISO, formatDate, parseLocalDate } from '../utils/date';
 import PageHeader from '../components/PageHeader';
 import Sheet from '../components/Sheet';
 import Fab from '../components/Fab';
@@ -31,7 +31,7 @@ export default function Fitness() {
   const stats = useMemo(() => {
     const thisWeekCutoff = new Date();
     thisWeekCutoff.setDate(thisWeekCutoff.getDate() - 7);
-    const thisWeek = workouts.filter((w) => new Date(w.date) >= thisWeekCutoff).length;
+    const thisWeek = workouts.filter((w) => parseLocalDate(w.date) >= thisWeekCutoff).length;
     const totalSets = workouts.reduce((sum, w) => sum + (Number(w.sets) || 0), 0);
     const uniqueDays = new Set(workouts.map((w) => w.date)).size;
     return { thisWeek, totalSets, uniqueDays };

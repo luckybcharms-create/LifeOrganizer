@@ -3,7 +3,7 @@ import { Wallet, Trash2, Pencil, CreditCard, Plus } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
-import { todayISO, formatShortDate, currency } from '../utils/date';
+import { todayISO, formatShortDate, currency, parseLocalDate } from '../utils/date';
 import PageHeader from '../components/PageHeader';
 import Sheet from '../components/Sheet';
 import Fab from '../components/Fab';
@@ -53,7 +53,7 @@ export default function Finance() {
     const now = new Date();
     const year = now.getFullYear();
     const yearIncome = transactions
-      .filter((t) => t.type === 'income' && new Date(t.date).getFullYear() === year)
+      .filter((t) => t.type === 'income' && parseLocalDate(t.date).getFullYear() === year)
       .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
     const elapsed = dayOfYear(now);
     const totalDays = isLeapYear(year) ? 366 : 365;

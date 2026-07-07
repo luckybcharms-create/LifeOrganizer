@@ -3,7 +3,7 @@ import { TrendingUp, Trash2, Pencil, Check } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
-import { todayISO, formatDate, currency } from '../utils/date';
+import { todayISO, formatDate, currency, parseLocalDate } from '../utils/date';
 import PageHeader from '../components/PageHeader';
 import Sheet from '../components/Sheet';
 import Fab from '../components/Fab';
@@ -36,7 +36,7 @@ export default function Career() {
     monthCutoff.setDate(1);
     monthCutoff.setHours(0, 0, 0, 0);
     const monthSales = sales
-      .filter((s) => new Date(s.date) >= monthCutoff)
+      .filter((s) => parseLocalDate(s.date) >= monthCutoff)
       .reduce((s, x) => s + (Number(x.amount) || 0), 0);
     return { totalSales, totalCommission, monthSales };
   }, [sales]);

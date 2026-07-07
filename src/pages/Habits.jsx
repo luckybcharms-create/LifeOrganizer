@@ -3,7 +3,7 @@ import { CheckSquare, Trash2, Flame, Pencil } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
-import { todayISO } from '../utils/date';
+import { todayISO, toLocalISODate } from '../utils/date';
 import PageHeader from '../components/PageHeader';
 import Sheet from '../components/Sheet';
 import Fab from '../components/Fab';
@@ -20,7 +20,7 @@ function currentWeekDays() {
   for (let i = 0; i < 7; i++) {
     const d = new Date(startOfWeek);
     d.setDate(startOfWeek.getDate() + i);
-    days.push(d.toISOString().slice(0, 10));
+    days.push(toLocalISODate(d));
   }
   return days;
 }
@@ -34,7 +34,7 @@ function calcStreak(doneDates) {
     cursor.setDate(cursor.getDate() - 1);
   }
   let streak = 0;
-  while (set.has(cursor.toISOString().slice(0, 10))) {
+  while (set.has(toLocalISODate(cursor))) {
     streak++;
     cursor.setDate(cursor.getDate() - 1);
   }
