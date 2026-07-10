@@ -672,12 +672,20 @@ h1, h2, h3, p {
   font-size: 11px;
   color: var(--text-faint);
   font-weight: 700;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .habit-day.done {
   background: var(--green-dim);
   border-color: var(--green);
   color: var(--green);
+}
+
+.habit-day.disabled {
+  cursor: default;
+  opacity: 0.4;
 }
 
 .link-row {

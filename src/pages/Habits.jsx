@@ -3,7 +3,7 @@ import { CheckSquare, Trash2, Flame, Pencil } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { makeId } from '../utils/id';
-import { todayISO, toLocalISODate } from '../utils/date';
+import { todayISO, toLocalISODate, formatDate } from '../utils/date';
 import PageHeader from '../components/PageHeader';
 import Sheet from '../components/Sheet';
 import Fab from '../components/Fab';
@@ -52,12 +52,14 @@ export default function Habits() {
   const today = todayISO();
   const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-  const sortedHabits = useMemo(() => {
-    return [...habits].sort((a, b) => {
-      const aDone = (log[a.id] || []).includes(today) ? 1 : 0;
-      const bDone = (log[b.id] || []).includes(today) ? 1 : 0;
-      return aDone - bDone;
-    });
+  const { todoHabits, doneHabits } = useMemo(() => {
+    const todo = [];
+    const done = [];
+    for (const h of habits) {
+      const isDoneToday = (log[h.id] || []).includes(today);
+      (isDoneToday ? done : todo).push(h);
+    }
+    return { todoHabits: todo, doneHabits: done };
   }, [habits, log, today]);
 
   function submit(e) {
@@ -85,10 +87,13 @@ export default function Habits() {
     setShowForm(true);
   }
 
-  function toggleToday(habitId) {
+  // Toggles completion for any date on or before today — lets you go back
+  // and fix a day you forgot to mark, not just today.
+  function toggleDate(habitId, dateStr) {
+    if (dateStr > today) return;
     const dates = log[habitId] || [];
-    const has = dates.includes(today);
-    setLog({ ...log, [habitId]: has ? dates.filter((d) => d !== today) : [...dates, today] });
+    const has = dates.includes(dateStr);
+    setLog({ ...log, [habitId]: has ? dates.filter((d) => d !== dateStr) : [...dates, dateStr] });
   }
 
   function remove(habitId) {
@@ -96,6 +101,59 @@ export default function Habits() {
     const next = { ...log };
     delete next[habitId];
     setLog(next);
+  }
+
+  function renderHabit(h) {
+    const dates = log[h.id] || [];
+    const streak = calcStreak(dates);
+    const doneToday = dates.includes(today);
+    return (
+      <SwipeableRow
+        key={h.id}
+        className="card-swipe-row"
+        actions={[
+          { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEdit(h) },
+          { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => remove(h.id) },
+        ]}
+      >
+        <div className="card">
+          <div className="flex-between" style={{ marginBottom: 12 }}>
+            <div>
+              <div className="list-item-title">{h.name}</div>
+              <div className="list-item-sub" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Flame size={13} color="var(--amber)" /> {streak} day streak
+              </div>
+            </div>
+            <button
+              className="btn"
+              onClick={() => toggleDate(h.id, today)}
+              style={doneToday ? { background: 'var(--green-dim)', color: 'var(--green)', borderColor: 'var(--green)' } : undefined}
+            >
+              {doneToday ? 'Done Today' : 'Mark Today'}
+            </button>
+          </div>
+          <div className="habit-grid">
+            {days.map((d, i) => {
+              const isFuture = d > today;
+              const isDone = dates.includes(d);
+              return (
+                <button
+                  type="button"
+                  key={d}
+                  className={`habit-day ${isDone ? 'done' : ''} ${isFuture ? 'disabled' : ''}`}
+                  disabled={isFuture}
+                  onClick={() => toggleDate(h.id, d)}
+                  title={isFuture ? undefined : `${formatDate(d)} — tap to ${isDone ? 'unmark' : 'mark'} done`}
+                  aria-label={`${formatDate(d)}${isDone ? ', done' : ''}`}
+                >
+                  {dayLabels[i]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </SwipeableRow>
+    );
   }
 
   return (
@@ -106,46 +164,19 @@ export default function Habits() {
           <EmptyState icon={CheckSquare} message="No habits yet. Tap + to start tracking one." />
         )}
 
-        {sortedHabits.map((h) => {
-          const dates = log[h.id] || [];
-          const streak = calcStreak(dates);
-          const doneToday = dates.includes(today);
-          return (
-            <SwipeableRow
-              key={h.id}
-              className="card-swipe-row"
-              actions={[
-                { label: 'Edit', tone: 'edit', icon: <Pencil size={16} />, onClick: () => openEdit(h) },
-                { label: 'Delete', tone: 'delete', icon: <Trash2 size={16} />, onClick: () => remove(h.id) },
-              ]}
-            >
-              <div className="card">
-                <div className="flex-between" style={{ marginBottom: 12 }}>
-                  <div>
-                    <div className="list-item-title">{h.name}</div>
-                    <div className="list-item-sub" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <Flame size={13} color="var(--amber)" /> {streak} day streak
-                    </div>
-                  </div>
-                  <button
-                    className="btn"
-                    onClick={() => toggleToday(h.id)}
-                    style={doneToday ? { background: 'var(--green-dim)', color: 'var(--green)', borderColor: 'var(--green)' } : undefined}
-                  >
-                    {doneToday ? 'Done Today' : 'Mark Today'}
-                  </button>
-                </div>
-                <div className="habit-grid">
-                  {days.map((d, i) => (
-                    <div key={d} className={`habit-day ${dates.includes(d) ? 'done' : ''}`}>
-                      {dayLabels[i]}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </SwipeableRow>
-          );
-        })}
+        {todoHabits.length > 0 && (
+          <>
+            {doneHabits.length > 0 && <div className="section-title mt-0">To Do</div>}
+            {todoHabits.map(renderHabit)}
+          </>
+        )}
+
+        {doneHabits.length > 0 && (
+          <>
+            <div className="section-title">Completed Today</div>
+            {doneHabits.map(renderHabit)}
+          </>
+        )}
       </main>
 
       <Fab onClick={openAdd} label="Add habit" />
