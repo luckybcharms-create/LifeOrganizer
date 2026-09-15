@@ -52,15 +52,10 @@ export default function Habits() {
   const today = todayISO();
   const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-  const { todoHabits, doneHabits } = useMemo(() => {
-    const todo = [];
-    const done = [];
-    for (const h of habits) {
-      const isDoneToday = (log[h.id] || []).includes(today);
-      (isDoneToday ? done : todo).push(h);
-    }
-    return { todoHabits: todo, doneHabits: done };
-  }, [habits, log, today]);
+  const todoHabits = useMemo(
+    () => habits.filter((h) => !(log[h.id] || []).includes(today)),
+    [habits, log, today]
+  );
 
   function submit(e) {
     e.preventDefault();
@@ -106,7 +101,6 @@ export default function Habits() {
   function renderHabit(h) {
     const dates = log[h.id] || [];
     const streak = calcStreak(dates);
-    const doneToday = dates.includes(today);
     return (
       <SwipeableRow
         key={h.id}
@@ -124,12 +118,8 @@ export default function Habits() {
                 <Flame size={13} color="var(--amber)" /> {streak} day streak
               </div>
             </div>
-            <button
-              className="btn"
-              onClick={() => toggleDate(h.id, today)}
-              style={doneToday ? { background: 'var(--green-dim)', color: 'var(--green)', borderColor: 'var(--green)' } : undefined}
-            >
-              {doneToday ? 'Done Today' : 'Mark Today'}
+            <button className="btn" onClick={() => toggleDate(h.id, today)}>
+              Mark Today
             </button>
           </div>
           <div className="habit-grid">
@@ -164,19 +154,11 @@ export default function Habits() {
           <EmptyState icon={CheckSquare} message="No habits yet. Tap + to start tracking one." />
         )}
 
-        {todoHabits.length > 0 && (
-          <>
-            {doneHabits.length > 0 && <div className="section-title mt-0">To Do</div>}
-            {todoHabits.map(renderHabit)}
-          </>
+        {habits.length > 0 && todoHabits.length === 0 && (
+          <EmptyState icon={CheckSquare} message="All habits done for today. Nice work!" />
         )}
 
-        {doneHabits.length > 0 && (
-          <>
-            <div className="section-title">Completed Today</div>
-            {doneHabits.map(renderHabit)}
-          </>
-        )}
+        {todoHabits.map(renderHabit)}
       </main>
 
       <Fab onClick={openAdd} label="Add habit" />
