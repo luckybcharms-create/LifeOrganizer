@@ -1,12 +1,11 @@
 import { useMemo } from 'react';
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid, CheckSquare } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storageKeys';
 import { todayISO, daysUntil, currency, parseLocalDate } from '../utils/date';
 import PageHeader from '../components/PageHeader';
 import StatTile from '../components/StatTile';
 import EmptyState from '../components/EmptyState';
-import { visibleNavItems } from '../components/BottomNav';
 
 function greeting() {
   const h = new Date().getHours();
@@ -22,7 +21,7 @@ export default function Dashboard({ onNavigate, visibility = {} }) {
   const [subs] = useLocalStorage(KEYS.subscriptions, []);
   const [goals] = useLocalStorage(KEYS.goals, []);
   const [habits] = useLocalStorage(KEYS.habits, []);
-  const [habitLog] = useLocalStorage(KEYS.habitLog, {});
+  const [habitLog, setHabitLog] = useLocalStorage(KEYS.habitLog, {});
   const [wishlist] = useLocalStorage(KEYS.wishlist, []);
   const [workouts] = useLocalStorage(KEYS.fitness, []);
 
@@ -52,6 +51,16 @@ export default function Dashboard({ onNavigate, visibility = {} }) {
     () => habits.filter((h) => (habitLog[h.id] || []).includes(today)).length,
     [habits, habitLog, today]
   );
+  const habitsDueToday = useMemo(
+    () => habits.filter((h) => !(habitLog[h.id] || []).includes(today)),
+    [habits, habitLog, today]
+  );
+
+  function markHabitDone(habitId) {
+    const dates = habitLog[habitId] || [];
+    if (dates.includes(today)) return;
+    setHabitLog({ ...habitLog, [habitId]: [...dates, today] });
+  }
 
   const wishlistTotal = useMemo(
     () => wishlist.reduce((sum, i) => sum + (Number(i.price) || 0), 0),
@@ -92,23 +101,33 @@ export default function Dashboard({ onNavigate, visibility = {} }) {
           )}
         </div>
 
-        <div className="section-title">Jump To</div>
-        {visibleNavItems(visibility).filter((n) => n.key !== 'dashboard').length === 0 ? (
-          <EmptyState message="All sections are hidden. Enable some in Settings." />
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-            {visibleNavItems(visibility).filter((n) => n.key !== 'dashboard').map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                className="card"
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, border: '1px solid var(--border-soft)', background: 'var(--bg-card)', cursor: 'pointer' }}
-                onClick={() => onNavigate(key)}
-              >
-                <Icon size={22} color="var(--accent)" />
-                <span style={{ fontSize: 12.5, fontWeight: 600 }}>{label}</span>
-              </button>
-            ))}
-          </div>
+        {isVisible('habits') && (
+          <>
+            <div className="section-title">Habits Due Today</div>
+            {habits.length === 0 ? (
+              <EmptyState icon={CheckSquare} message="No habits yet. Add some in Habits." />
+            ) : habitsDueToday.length === 0 ? (
+              <EmptyState icon={CheckSquare} message="All habits done for today. Nice work!" />
+            ) : (
+              <div className="card">
+                {habitsDueToday.map((h) => (
+                  <div key={h.id} className="list-item">
+                    <button
+                      type="button"
+                      className="list-item-main"
+                      style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}
+                      onClick={() => onNavigate('habits')}
+                    >
+                      <div className="list-item-title">{h.name}</div>
+                    </button>
+                    <button className="btn" onClick={() => markHabitDone(h.id)}>
+                      Mark Today
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
     </>
