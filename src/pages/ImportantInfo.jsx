@@ -223,7 +223,7 @@ export default function ImportantInfo() {
   }
 
   const familyMembers = info.familyMembers || [];
-  const passwords = info.passwords || [];
+  const passwords = [...(info.passwords || [])].sort((a, b) => a.name.localeCompare(b.name));
   const documents = info.documents || [];
 
   return (
